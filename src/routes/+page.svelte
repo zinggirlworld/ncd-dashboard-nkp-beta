@@ -7,7 +7,6 @@
 
 	import MonthlyTrendChart from '$lib/components/MonthlyTrendChart.svelte';
 	import ActualTargetChart from '$lib/components/ActualTargetChart.svelte';
-	import GapChart from '$lib/components/GapChart.svelte';
 	import FootRiskChart from '$lib/components/FootRiskChart.svelte';
 
 	import {
@@ -19,7 +18,6 @@
 		Footprints,
 		LineChart,
 		Target,
-		TrendingUp,
 		UsersRound,
 		XCircle
 	} from 'lucide-svelte';
@@ -117,6 +115,15 @@
 
 	let screeningRows = $derived(
 		currentRows.filter((row) => screeningIndicatorNos.includes(row.indicator_no))
+	);
+
+	let screeningStatusRows = $derived(
+		[...screeningRows].sort((a, b) => {
+			const gapA = a.gap_from_target ?? 0;
+			const gapB = b.gap_from_target ?? 0;
+
+			return gapA - gapB;
+		})
 	);
 
 	let currentFootRiskRows = $derived(
@@ -261,6 +268,12 @@
 		if (row.status === 'ผ่าน') return 'bg-emerald-500';
 
 		return 'bg-rose-500';
+	}
+
+	function getGapTextClass(row: NcdIndicator): string {
+		if ((row.gap_from_target ?? 0) >= 0) return 'text-emerald-600';
+
+		return 'text-rose-600';
 	}
 
 	function getCategoryClass(category: string): string {
@@ -764,101 +777,90 @@
 					<ActualTargetChart rows={currentRows} />
 				</div>
 
-				<div class="space-y-5">
-					<section class="rounded-[1.75rem] border border-emerald-100 bg-white p-5 shadow-sm">
-						<div class="flex items-center gap-3">
-							<div
-								class="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-700"
-							>
-								<CheckCircle2 size={21} strokeWidth={2.5} />
-							</div>
-
-							<div>
-								<h2 class="text-xl font-black text-[#063F33]">สถานะคัดกรองรายรายการ</h2>
-								<p class="mt-1 text-sm font-medium text-slate-500">
-									ดูทีละรายการว่าอยู่ห่างจากเป้าหมายเท่าไร
-								</p>
-							</div>
+				<section class="rounded-[1.75rem] border border-emerald-100 bg-white p-5 shadow-sm">
+					<div class="flex items-center gap-3">
+						<div class="grid h-10 w-10 place-items-center rounded-2xl bg-rose-50 text-rose-600">
+							<CheckCircle2 size={21} strokeWidth={2.5} />
 						</div>
 
-						<div class="mt-5 space-y-4">
-							{#each screeningRows as row}
-								<div class="rounded-3xl border border-slate-100 bg-slate-50/70 p-4">
-									<div class="flex items-start justify-between gap-3">
-										<div>
-											<p class="text-sm font-black text-slate-800">
-												{getShortIndicatorName(row)}
-											</p>
-											<p class="mt-1 text-xs font-semibold text-slate-500">
-												ผลงาน {formatPercent(row.actual_percent)} | เป้าหมาย {row.target_text}
-											</p>
-										</div>
+						<div>
+							<h2 class="text-xl font-black text-[#063F33]">สรุป Gap และสถานะคัดกรอง</h2>
+							<p class="mt-1 text-sm font-medium text-slate-500">
+								เรียงจากรายการที่ห่างจากเป้าหมายมากที่สุด
+							</p>
+						</div>
+					</div>
 
-										<span
-											class={`rounded-full px-3 py-1 text-xs font-black ${getStatusClass(row.status)}`}
-										>
-											{row.status}
-										</span>
-									</div>
-
-									<div class="mt-4 h-3 overflow-hidden rounded-full bg-white">
-										<div
-											class={`h-full rounded-full ${getScreeningBarColor(row)}`}
-											style={`width: ${Math.min(row.actual_percent ?? 0, 100)}%`}
-										></div>
-									</div>
-
-									<div class="mt-3 flex items-center justify-between text-xs font-bold">
-										<span class="text-slate-500">
+					<div class="mt-5 space-y-4">
+						{#each screeningStatusRows as row}
+							<div class="rounded-3xl border border-slate-100 bg-slate-50/70 p-4">
+								<div class="flex items-start justify-between gap-3">
+									<div>
+										<p class="text-sm font-black text-slate-800">
+											{getShortIndicatorName(row)}
+										</p>
+										<p class="mt-1 text-xs font-semibold text-slate-500">
 											{formatNumber(row.numerator)} / {formatNumber(row.denominator)} คน
-										</span>
+										</p>
+									</div>
 
-										<span
-											class={(row.gap_from_target ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'}
-										>
-											Gap {formatNumber(row.gap_from_target)}
-										</span>
+									<span
+										class={`rounded-full px-3 py-1 text-xs font-black ${getStatusClass(row.status)}`}
+									>
+										{row.status}
+									</span>
+								</div>
+
+								<div class="mt-4 grid grid-cols-2 gap-3">
+									<div class="rounded-2xl bg-white p-3">
+										<p class="text-xs font-bold text-slate-400">ผลงาน</p>
+										<p class="mt-1 text-xl font-black text-slate-800">
+											{formatPercent(row.actual_percent)}
+										</p>
+									</div>
+
+									<div class="rounded-2xl bg-white p-3">
+										<p class="text-xs font-bold text-slate-400">เป้าหมาย</p>
+										<p class="mt-1 text-xl font-black text-slate-800">
+											{row.target_text}
+										</p>
 									</div>
 								</div>
-							{/each}
+
+								<div class="mt-4 h-3 overflow-hidden rounded-full bg-white">
+									<div
+										class={`h-full rounded-full ${getScreeningBarColor(row)}`}
+										style={`width: ${Math.min(row.actual_percent ?? 0, 100)}%`}
+									></div>
+								</div>
+
+								<div class="mt-3 flex items-center justify-between text-xs font-bold">
+									<span class="text-slate-500"> ความก้าวหน้าจากฐานผู้ป่วยเข้าคลินิก </span>
+
+									<span class={getGapTextClass(row)}>
+										Gap {formatNumber(row.gap_from_target)}
+									</span>
+								</div>
+							</div>
+						{/each}
+					</div>
+
+					<div class="mt-5 grid grid-cols-2 gap-3">
+						<div class="rounded-2xl bg-emerald-50 p-4">
+							<p class="text-sm font-bold text-emerald-700">ผ่าน</p>
+							<p class="mt-1 text-3xl font-black text-emerald-700">
+								{screeningPassedCount}
+							</p>
 						</div>
 
-						<div class="mt-5 grid grid-cols-2 gap-3">
-							<div class="rounded-2xl bg-emerald-50 p-4">
-								<p class="text-sm font-bold text-emerald-700">ผ่าน</p>
-								<p class="mt-1 text-3xl font-black text-emerald-700">
-									{screeningPassedCount}
-								</p>
-							</div>
-
-							<div class="rounded-2xl bg-rose-50 p-4">
-								<p class="text-sm font-bold text-rose-700">ไม่ผ่าน</p>
-								<p class="mt-1 text-3xl font-black text-rose-700">
-									{screeningFailedCount}
-								</p>
-							</div>
+						<div class="rounded-2xl bg-rose-50 p-4">
+							<p class="text-sm font-bold text-rose-700">ไม่ผ่าน</p>
+							<p class="mt-1 text-3xl font-black text-rose-700">
+								{screeningFailedCount}
+							</p>
 						</div>
-					</section>
-
-					<section class="rounded-[1.75rem] border border-emerald-100 bg-white p-5 shadow-sm">
-						<div class="flex items-center gap-3">
-							<div class="grid h-10 w-10 place-items-center rounded-2xl bg-rose-50 text-rose-600">
-								<TrendingUp size={21} strokeWidth={2.5} />
-							</div>
-
-							<div>
-								<h2 class="text-xl font-black text-[#063F33]">Gap จากเป้าหมาย</h2>
-								<p class="mt-1 text-sm font-medium text-slate-500">
-									แสดงเฉพาะรายการคัดกรองที่ต่ำกว่าเป้าหมาย
-								</p>
-							</div>
-						</div>
-
-						<div class="mt-5">
-							<GapChart rows={currentRows} />
-						</div>
-					</section>
-				</div>
+					</div>
+				</section>
 			</section>
 
 			<section class="rounded-[1.75rem] border border-amber-100 bg-white p-5 shadow-sm">
