@@ -8,13 +8,11 @@
 	import MonthlyTrendChart from '$lib/components/MonthlyTrendChart.svelte';
 	import ActualTargetChart from '$lib/components/ActualTargetChart.svelte';
 	import GapChart from '$lib/components/GapChart.svelte';
-	import StatusDonutChart from '$lib/components/StatusDonutChart.svelte';
 	import FootRiskChart from '$lib/components/FootRiskChart.svelte';
 
 	import {
 		Activity,
 		AlertTriangle,
-		BarChart3,
 		CheckCircle2,
 		ChevronDown,
 		ClipboardList,
@@ -256,6 +254,13 @@
 		}
 
 		return 'bg-slate-100 text-slate-600 ring-1 ring-slate-200';
+	}
+
+	function getScreeningBarColor(row: NcdIndicator | undefined): string {
+		if (!row) return 'bg-slate-300';
+		if (row.status === 'ผ่าน') return 'bg-emerald-500';
+
+		return 'bg-rose-500';
 	}
 
 	function getCategoryClass(category: string): string {
@@ -765,22 +770,60 @@
 							<div
 								class="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-700"
 							>
-								<BarChart3 size={21} strokeWidth={2.5} />
+								<CheckCircle2 size={21} strokeWidth={2.5} />
 							</div>
 
 							<div>
-								<h2 class="text-xl font-black text-[#063F33]">สถานะคัดกรอง</h2>
+								<h2 class="text-xl font-black text-[#063F33]">สถานะคัดกรองรายรายการ</h2>
 								<p class="mt-1 text-sm font-medium text-slate-500">
-									ผ่าน / ไม่ผ่าน เฉพาะตรวจตา ช่องปาก และเท้า
+									ดูทีละรายการว่าอยู่ห่างจากเป้าหมายเท่าไร
 								</p>
 							</div>
 						</div>
 
-						<div class="mt-4">
-							<StatusDonutChart rows={screeningRows} />
+						<div class="mt-5 space-y-4">
+							{#each screeningRows as row}
+								<div class="rounded-3xl border border-slate-100 bg-slate-50/70 p-4">
+									<div class="flex items-start justify-between gap-3">
+										<div>
+											<p class="text-sm font-black text-slate-800">
+												{getShortIndicatorName(row)}
+											</p>
+											<p class="mt-1 text-xs font-semibold text-slate-500">
+												ผลงาน {formatPercent(row.actual_percent)} | เป้าหมาย {row.target_text}
+											</p>
+										</div>
+
+										<span
+											class={`rounded-full px-3 py-1 text-xs font-black ${getStatusClass(row.status)}`}
+										>
+											{row.status}
+										</span>
+									</div>
+
+									<div class="mt-4 h-3 overflow-hidden rounded-full bg-white">
+										<div
+											class={`h-full rounded-full ${getScreeningBarColor(row)}`}
+											style={`width: ${Math.min(row.actual_percent ?? 0, 100)}%`}
+										></div>
+									</div>
+
+									<div class="mt-3 flex items-center justify-between text-xs font-bold">
+										<span class="text-slate-500">
+											{formatNumber(row.numerator)} / {formatNumber(row.denominator)} คน
+										</span>
+
+										<span
+											class={(row.gap_from_target ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'}
+										>
+											Gap {formatNumber(row.gap_from_target)}
+										</span>
+									</div>
+								</div>
+							{/each}
 						</div>
 
-						<div class="mt-4 grid grid-cols-2 gap-3">
+						<div class="mt-5 grid grid-cols-2 gap-3">
 							<div class="rounded-2xl bg-emerald-50 p-4">
 								<p class="text-sm font-bold text-emerald-700">ผ่าน</p>
 								<p class="mt-1 text-3xl font-black text-emerald-700">
