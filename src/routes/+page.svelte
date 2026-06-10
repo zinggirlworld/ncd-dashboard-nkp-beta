@@ -531,7 +531,9 @@
 					</div>
 
 					<p class="mt-3 text-5xl font-black text-teal-600">{formatPercent(averagePercent)}</p>
-					<p class="mt-2 text-sm font-semibold text-slate-500">รวมทุกตัวชี้วัดที่มีข้อมูล</p>
+					<p class="mt-2 text-sm font-semibold text-slate-500">
+						ค่าเฉลี่ยร้อยละของ 5 ตัวชี้วัดที่มีข้อมูล
+					</p>
 				</div>
 			</section>
 
@@ -660,9 +662,7 @@
 
 						<div>
 							<p class="text-sm font-black text-amber-700">เฉพาะตรวจตา ตรวจช่องปาก และตรวจเท้า</p>
-							<h2 class="mt-1 text-2xl font-black text-[#063F33]">
-								ประเด็นคัดกรองที่ควรเร่งติดตาม
-							</h2>
+							<h2 class="mt-1 text-2xl font-black text-[#063F33]">3 รายการที่ควรเร่งติดตาม</h2>
 						</div>
 					</div>
 
