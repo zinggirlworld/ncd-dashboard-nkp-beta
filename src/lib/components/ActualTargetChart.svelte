@@ -10,20 +10,12 @@
 		rows?: NcdIndicator[];
 	} = $props();
 
-	let chartEl: HTMLDivElement;
+	let chartEl = $state<HTMLDivElement | null>(null);
 	let chart: ECharts | null = null;
 
-	let chartRows = $derived(
-		rows
-			.filter((row) => row.actual_percent !== null && row.actual_percent !== undefined)
-			.sort((a, b) => a.indicator_no - b.indicator_no)
-	);
-
-	let hasData = $derived(chartRows.length > 0);
+	const visibleIndicatorNos = [13, 14, 15];
 
 	function shortName(row: NcdIndicator): string {
-		if (row.indicator_no === 1) return 'ตรวจ HbA1c';
-		if (row.indicator_no === 2) return 'HbA1c < 7';
 		if (row.indicator_no === 13) return 'ตรวจตา';
 		if (row.indicator_no === 14) return 'ตรวจช่องปาก';
 		if (row.indicator_no === 15) return 'ตรวจเท้า';
@@ -31,19 +23,19 @@
 		return `ตัวชี้วัด ${row.indicator_no}`;
 	}
 
-	function formatPercent(value: number | null | undefined): string {
-		if (value === null || value === undefined) return '-';
+	let chartRows = $derived(
+		rows
+			.filter((row) => visibleIndicatorNos.includes(row.indicator_no))
+			.filter((row) => row.actual_percent !== null)
+			.sort((a, b) => a.indicator_no - b.indicator_no)
+	);
 
-		return `${value.toLocaleString('th-TH', {
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2
-		})}%`;
-	}
+	let hasData = $derived(chartRows.length > 0);
 
 	function buildOptions(): EChartsOption {
 		const labels = chartRows.map(shortName);
-		const actualData = chartRows.map((row) => Number(row.actual_percent ?? 0));
-		const targetData = chartRows.map((row) => Number(row.target_value ?? 0));
+		const actualData = chartRows.map((row) => row.actual_percent ?? 0);
+		const targetData = chartRows.map((row) => row.target_value ?? 0);
 
 		return {
 			backgroundColor: 'transparent',
@@ -51,11 +43,9 @@
 			tooltip: {
 				trigger: 'axis',
 				axisPointer: {
-					type: 'shadow',
-					shadowStyle: {
-						color: 'rgba(15, 118, 110, 0.06)'
-					}
+					type: 'shadow'
 				},
+				valueFormatter: (value) => `${Number(value).toFixed(2)}%`,
 				borderColor: '#D1FAE5',
 				borderWidth: 1,
 				backgroundColor: 'rgba(255, 255, 255, 0.96)',
@@ -63,54 +53,12 @@
 					fontFamily: 'Tahoma',
 					color: '#334155',
 					fontWeight: 700
-				},
-				formatter: (params) => {
-					const items = Array.isArray(params) ? params : [params];
-					const first = items[0] as { dataIndex: number; axisValue?: string };
-					const row = chartRows[first.dataIndex];
-
-					if (!row) return '';
-
-					const actual = Number(row.actual_percent ?? 0);
-					const target = Number(row.target_value ?? 0);
-					const gap = actual - target;
-					const statusColor = actual >= target ? '#059669' : '#E11D48';
-
-					return `
-						<div style="min-width: 220px;">
-							<div style="font-size: 13px; color: #0F766E; margin-bottom: 6px;">
-								ตัวชี้วัดที่ ${row.indicator_no}
-							</div>
-							<div style="font-size: 14px; color: #0F172A; margin-bottom: 10px; line-height: 1.4;">
-								${row.indicator_name}
-							</div>
-							<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-								<span>ผลงานจริง</span>
-								<strong style="color: ${statusColor};">${formatPercent(actual)}</strong>
-							</div>
-							<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-								<span>เป้าหมาย</span>
-								<strong>${formatPercent(target)}</strong>
-							</div>
-							<div style="display: flex; justify-content: space-between;">
-								<span>Gap</span>
-								<strong style="color: ${gap >= 0 ? '#059669' : '#E11D48'};">
-									${gap.toLocaleString('th-TH', {
-										minimumFractionDigits: 2,
-										maximumFractionDigits: 2
-									})}
-								</strong>
-							</div>
-						</div>
-					`;
 				}
 			},
 
 			legend: {
 				top: 0,
 				right: 0,
-				itemWidth: 14,
-				itemHeight: 10,
 				textStyle: {
 					fontFamily: 'Tahoma',
 					fontWeight: 700,
@@ -121,8 +69,8 @@
 			grid: {
 				left: 52,
 				right: 24,
-				top: 58,
-				bottom: 58
+				top: 60,
+				bottom: 48
 			},
 
 			xAxis: {
@@ -132,16 +80,12 @@
 					fontFamily: 'Tahoma',
 					fontWeight: 700,
 					color: '#475569',
-					interval: 0,
-					margin: 16
+					interval: 0
 				},
 				axisLine: {
 					lineStyle: {
 						color: '#CBD5E1'
 					}
-				},
-				axisTick: {
-					show: false
 				}
 			},
 
@@ -153,13 +97,7 @@
 					formatter: '{value}%',
 					fontFamily: 'Tahoma',
 					fontWeight: 700,
-					color: '#64748B'
-				},
-				axisLine: {
-					show: false
-				},
-				axisTick: {
-					show: false
+					color: '#475569'
 				},
 				splitLine: {
 					lineStyle: {
@@ -174,8 +112,7 @@
 					name: 'ผลงานจริง',
 					type: 'bar',
 					data: actualData,
-					barWidth: 34,
-					barMaxWidth: 42,
+					barWidth: 42,
 					itemStyle: {
 						color: (params) => {
 							const value = Number(params.value);
@@ -183,7 +120,7 @@
 
 							return value >= target ? '#10B981' : '#F43F5E';
 						},
-						borderRadius: [10, 10, 0, 0]
+						borderRadius: [14, 14, 0, 0]
 					},
 					label: {
 						show: true,
@@ -192,12 +129,6 @@
 						fontFamily: 'Tahoma',
 						fontWeight: 800,
 						color: '#0F172A'
-					},
-					emphasis: {
-						itemStyle: {
-							shadowBlur: 14,
-							shadowColor: 'rgba(15, 118, 110, 0.18)'
-						}
 					}
 				},
 				{
@@ -205,7 +136,6 @@
 					type: 'line',
 					data: targetData,
 					smooth: true,
-					symbol: 'circle',
 					symbolSize: 9,
 					lineStyle: {
 						width: 4,
@@ -213,12 +143,7 @@
 						type: 'dashed'
 					},
 					itemStyle: {
-						color: '#64748B',
-						borderColor: '#ffffff',
-						borderWidth: 2
-					},
-					label: {
-						show: false
+						color: '#64748B'
 					}
 				}
 			]
@@ -258,16 +183,9 @@
 </script>
 
 {#if hasData}
-	<div class="h-[380px] w-full" bind:this={chartEl}></div>
+	<div class="h-[360px] w-full" bind:this={chartEl}></div>
 {:else}
-	<div
-		class="grid h-[300px] w-full place-items-center rounded-3xl border border-dashed border-emerald-200 bg-emerald-50/50"
-	>
-		<div class="text-center">
-			<p class="text-base font-black text-emerald-700">ไม่มีข้อมูลสำหรับแสดงกราฟ</p>
-			<p class="mt-1 text-sm font-semibold text-slate-500">
-				กรุณาเลือกปีงบประมาณ ช่วงเวลา หรืองวดข้อมูลใหม่
-			</p>
-		</div>
+	<div class="grid h-[280px] place-items-center rounded-3xl border border-dashed border-slate-200">
+		<p class="font-bold text-slate-400">ไม่มีข้อมูลผลงานเทียบเป้าหมาย</p>
 	</div>
 {/if}

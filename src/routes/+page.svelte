@@ -22,6 +22,7 @@
 		LineChart,
 		Target,
 		TrendingUp,
+		UsersRound,
 		XCircle
 	} from 'lucide-svelte';
 
@@ -44,6 +45,8 @@
 		hasData: boolean;
 		displayStatus: string;
 	};
+
+	const screeningIndicatorNos = [13, 14, 15];
 
 	let rows = $state<NcdIndicator[]>([]);
 	let footRiskRows = $state<FootRiskRow[]>([]);
@@ -114,6 +117,10 @@
 			: filteredRows
 	);
 
+	let screeningRows = $derived(
+		currentRows.filter((row) => screeningIndicatorNos.includes(row.indicator_no))
+	);
+
 	let currentFootRiskRows = $derived(
 		footRiskRows
 			.filter((row) => row.fiscal_year_be === selectedYear)
@@ -130,6 +137,26 @@
 	let passedCount = $derived(currentRows.filter((r) => r.status === 'ผ่าน').length);
 	let failedCount = $derived(currentRows.filter((r) => r.status === 'ไม่ผ่าน').length);
 
+	let screeningPassedCount = $derived(screeningRows.filter((r) => r.status === 'ผ่าน').length);
+	let screeningFailedCount = $derived(screeningRows.filter((r) => r.status === 'ไม่ผ่าน').length);
+
+	let clinicPatientTotal = $derived(
+		currentRows.find((row) => row.indicator_no === 1)?.denominator ??
+			Math.max(...currentRows.map((row) => row.denominator ?? 0), 0)
+	);
+
+	let eyeScreeningRow = $derived(currentRows.find((row) => row.indicator_no === 13));
+	let oralScreeningRow = $derived(currentRows.find((row) => row.indicator_no === 14));
+	let footScreeningRow = $derived(currentRows.find((row) => row.indicator_no === 15));
+
+	let eyeScreeningCount = $derived(eyeScreeningRow?.numerator ?? 0);
+	let oralScreeningCount = $derived(oralScreeningRow?.numerator ?? 0);
+	let footScreeningCount = $derived(footScreeningRow?.numerator ?? 0);
+
+	let eyeScreeningPercent = $derived(eyeScreeningRow?.actual_percent ?? 0);
+	let oralScreeningPercent = $derived(oralScreeningRow?.actual_percent ?? 0);
+	let footScreeningPercent = $derived(footScreeningRow?.actual_percent ?? 0);
+
 	let averagePercent = $derived(
 		currentRows.length > 0
 			? currentRows.reduce((sum, r) => sum + (r.actual_percent ?? 0), 0) / currentRows.length
@@ -142,6 +169,7 @@
 
 	let urgentRows = $derived(
 		[...currentRows]
+			.filter((row) => screeningIndicatorNos.includes(row.indicator_no))
 			.filter((row) => row.status === 'ไม่ผ่าน')
 			.sort((a, b) => (a.gap_from_target ?? 0) - (b.gap_from_target ?? 0))
 			.slice(0, 3)
@@ -403,7 +431,7 @@
 				</p>
 			</section>
 		{:else}
-			<section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+			<section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
 				<div
 					class="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
 				>
@@ -426,10 +454,29 @@
 				</div>
 
 				<div
+					class="rounded-[1.5rem] border border-sky-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+				>
+					<div class="flex items-center justify-between">
+						<p class="text-sm font-black text-slate-500">ผู้ป่วยเข้าคลินิก</p>
+						<div class="grid h-11 w-11 place-items-center rounded-2xl bg-sky-50 text-sky-700">
+							<UsersRound size={22} strokeWidth={2.5} />
+						</div>
+					</div>
+
+					<p class="mt-3 text-5xl font-black text-sky-700">
+						{formatNumber(clinicPatientTotal)}
+					</p>
+
+					<p class="mt-2 text-sm font-semibold text-slate-500">
+						HN ไม่ซ้ำ | {currentPeriodLabel} ปีงบประมาณ {selectedYear}
+					</p>
+				</div>
+
+				<div
 					class="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
 				>
 					<div class="flex items-center justify-between">
-						<p class="text-sm font-black text-slate-500">ผ่านเป้าหมาย</p>
+						<p class="text-sm font-black text-slate-500">ผ่านเป้าหมายภาพรวม</p>
 						<div
 							class="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-50 text-emerald-700"
 						>
@@ -438,37 +485,149 @@
 					</div>
 
 					<p class="mt-3 text-5xl font-black text-emerald-600">{passedCount}</p>
-					<p class="mt-2 text-sm font-semibold text-emerald-700">
-						คิดเป็น {formatPercent(passRate)} ของตัวชี้วัดที่มีข้อมูล
-					</p>
+					<p class="mt-2 text-sm font-semibold text-emerald-700">รวมทุกตัวชี้วัดที่มีข้อมูล</p>
 				</div>
 
 				<div
 					class="rounded-[1.5rem] border border-rose-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
 				>
 					<div class="flex items-center justify-between">
-						<p class="text-sm font-black text-slate-500">ไม่ผ่านเป้าหมาย</p>
+						<p class="text-sm font-black text-slate-500">ไม่ผ่านเป้าหมายภาพรวม</p>
 						<div class="grid h-11 w-11 place-items-center rounded-2xl bg-rose-50 text-rose-600">
 							<XCircle size={22} strokeWidth={2.5} />
 						</div>
 					</div>
 
 					<p class="mt-3 text-5xl font-black text-rose-500">{failedCount}</p>
-					<p class="mt-2 text-sm font-semibold text-rose-600">เฉพาะตัวชี้วัดที่มีข้อมูล</p>
+					<p class="mt-2 text-sm font-semibold text-rose-600">รวมทุกตัวชี้วัดที่มีข้อมูล</p>
 				</div>
 
 				<div
 					class="rounded-[1.5rem] border border-teal-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
 				>
 					<div class="flex items-center justify-between">
-						<p class="text-sm font-black text-slate-500">ผลงานเฉลี่ย</p>
+						<p class="text-sm font-black text-slate-500">ผลงานเฉลี่ยภาพรวม</p>
 						<div class="grid h-11 w-11 place-items-center rounded-2xl bg-teal-50 text-teal-700">
 							<Activity size={22} strokeWidth={2.5} />
 						</div>
 					</div>
 
 					<p class="mt-3 text-5xl font-black text-teal-600">{formatPercent(averagePercent)}</p>
-					<p class="mt-2 text-sm font-semibold text-slate-500">เฉพาะตัวชี้วัดที่มีข้อมูล</p>
+					<p class="mt-2 text-sm font-semibold text-slate-500">รวมทุกตัวชี้วัดที่มีข้อมูล</p>
+				</div>
+			</section>
+
+			<section class="rounded-[1.75rem] border border-emerald-100 bg-white p-5 shadow-sm">
+				<div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+					<div>
+						<h2 class="text-2xl font-black text-[#063F33]">
+							จำนวนผู้ป่วยที่ได้รับการตรวจคัดกรองแต่ละรายการ
+						</h2>
+
+						<p class="mt-1 text-sm font-medium text-slate-500">
+							แสดงจำนวนผู้ป่วยที่ได้รับการตรวจตา ตรวจช่องปาก และตรวจเท้า
+							จากฐานผู้ป่วยเข้าคลินิกทั้งหมด
+						</p>
+
+						<p class="mt-2 text-sm font-black text-amber-700">
+							แต่ละรายการเทียบกับฐานผู้ป่วยเข้าคลินิก ไม่ใช่ตัวเลขที่นำมาบวกกัน
+						</p>
+					</div>
+
+					<div class="rounded-2xl bg-sky-50 px-4 py-3 text-right ring-1 ring-sky-100">
+						<p class="text-xs font-black text-sky-700">ฐานผู้ป่วยเข้าคลินิก</p>
+						<p class="mt-1 text-2xl font-black text-sky-800">
+							{formatNumber(clinicPatientTotal)} คน
+						</p>
+						<p class="text-xs font-semibold text-slate-500">
+							{currentPeriodLabel} | ปีงบประมาณ {selectedYear}
+						</p>
+					</div>
+				</div>
+
+				<div class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
+					<div class="rounded-3xl border border-emerald-100 bg-emerald-50/60 p-5">
+						<p class="text-sm font-black text-emerald-700">ได้รับการตรวจจอประสาทตา</p>
+
+						<div class="mt-3 flex items-end gap-2">
+							<p class="text-4xl font-black text-emerald-800">
+								{formatNumber(eyeScreeningCount)}
+							</p>
+							<p class="pb-1 text-lg font-black text-emerald-600">
+								/ {formatNumber(clinicPatientTotal)} คน
+							</p>
+						</div>
+
+						<p class="mt-2 text-sm font-semibold text-slate-500">
+							คิดเป็น {formatPercent(eyeScreeningPercent)} ของผู้ป่วยเข้าคลินิก
+						</p>
+
+						<div class="mt-4 h-3 overflow-hidden rounded-full bg-white">
+							<div
+								class="h-full rounded-full bg-emerald-500"
+								style={`width: ${Math.min(eyeScreeningPercent, 100)}%`}
+							></div>
+						</div>
+					</div>
+
+					<div class="rounded-3xl border border-amber-100 bg-amber-50/70 p-5">
+						<p class="text-sm font-black text-amber-700">ได้รับการตรวจช่องปาก / ฟัน</p>
+
+						<div class="mt-3 flex items-end gap-2">
+							<p class="text-4xl font-black text-amber-800">
+								{formatNumber(oralScreeningCount)}
+							</p>
+							<p class="pb-1 text-lg font-black text-amber-600">
+								/ {formatNumber(clinicPatientTotal)} คน
+							</p>
+						</div>
+
+						<p class="mt-2 text-sm font-semibold text-slate-500">
+							คิดเป็น {formatPercent(oralScreeningPercent)} ของผู้ป่วยเข้าคลินิก
+						</p>
+
+						<div class="mt-4 h-3 overflow-hidden rounded-full bg-white">
+							<div
+								class="h-full rounded-full bg-amber-500"
+								style={`width: ${Math.min(oralScreeningPercent, 100)}%`}
+							></div>
+						</div>
+					</div>
+
+					<div class="rounded-3xl border border-violet-100 bg-violet-50/70 p-5">
+						<p class="text-sm font-black text-violet-700">ได้รับการตรวจเท้าอย่างละเอียด</p>
+
+						<div class="mt-3 flex items-end gap-2">
+							<p class="text-4xl font-black text-violet-800">
+								{formatNumber(footScreeningCount)}
+							</p>
+							<p class="pb-1 text-lg font-black text-violet-600">
+								/ {formatNumber(clinicPatientTotal)} คน
+							</p>
+						</div>
+
+						<p class="mt-2 text-sm font-semibold text-slate-500">
+							คิดเป็น {formatPercent(footScreeningPercent)} ของผู้ป่วยเข้าคลินิก
+						</p>
+
+						<div class="mt-4 h-3 overflow-hidden rounded-full bg-white">
+							<div
+								class="h-full rounded-full bg-violet-500"
+								style={`width: ${Math.min(footScreeningPercent, 100)}%`}
+							></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="mt-5 rounded-3xl border border-slate-100 bg-slate-50 px-5 py-4">
+					<p class="text-sm font-bold text-slate-700">
+						อ่านอย่างไร:
+						<span class="font-medium text-slate-600">
+							ตัวเลขแต่ละรายการเป็นจำนวนผู้ป่วยที่ได้รับการตรวจจากฐานผู้ป่วยเข้าคลินิกทั้งหมด
+							ไม่ใช่ตัวเลขที่ต้องนำมาบวกกัน เพราะผู้ป่วย 1 คนอาจได้รับการตรวจมากกว่า 1 รายการ
+							หรืออาจยังไม่ได้รับการตรวจบางรายการ
+						</span>
+					</p>
 				</div>
 			</section>
 
@@ -482,8 +641,10 @@
 						</div>
 
 						<div>
-							<p class="text-sm font-black text-amber-700">Priority Focus</p>
-							<h2 class="mt-1 text-2xl font-black text-[#063F33]">ประเด็นที่ควรติดตามเร่งด่วน</h2>
+							<p class="text-sm font-black text-amber-700">เฉพาะตรวจตา ตรวจช่องปาก และตรวจเท้า</p>
+							<h2 class="mt-1 text-2xl font-black text-[#063F33]">
+								ประเด็นคัดกรองที่ควรเร่งติดตาม
+							</h2>
 						</div>
 					</div>
 
@@ -495,7 +656,7 @@
 				</div>
 
 				<p class="mt-3 text-sm font-medium text-slate-500">
-					เรียงตามช่องว่างจากเป้าหมายมากที่สุด เพื่อใช้ประกอบการติดตามคุณภาพบริการ
+					เรียงจากช่องว่างจากเป้าหมายมากที่สุด เพื่อช่วยให้เห็นรายการคัดกรองที่ควรติดตามก่อน
 				</p>
 
 				{#if urgentRows.length > 0}
@@ -542,7 +703,9 @@
 					</div>
 				{:else}
 					<div class="mt-5 rounded-3xl border border-emerald-100 bg-emerald-50 p-5">
-						<p class="font-bold text-emerald-700">ตัวชี้วัดในช่วงเวลานี้ผ่านเป้าหมายทั้งหมด</p>
+						<p class="font-bold text-emerald-700">
+							ตัวชี้วัดคัดกรองตา ช่องปาก และเท้า ในช่วงเวลานี้ผ่านเป้าหมายทั้งหมด
+						</p>
 					</div>
 				{/if}
 			</section>
@@ -559,7 +722,7 @@
 						<div>
 							<h2 class="text-2xl font-black text-[#063F33]">แนวโน้มผลงานรายเดือน</h2>
 							<p class="mt-1 text-sm font-medium text-slate-500">
-								แสดงแนวโน้มร้อยละของตัวชี้วัดสำคัญในปีงบประมาณที่เลือก
+								แสดงแนวโน้มร้อยละของการตรวจตา ตรวจช่องปาก และตรวจเท้า
 							</p>
 						</div>
 					</div>
@@ -583,7 +746,7 @@
 							<div>
 								<h2 class="text-2xl font-black text-[#063F33]">ผลงานเทียบเป้าหมาย</h2>
 								<p class="mt-1 text-sm font-medium text-slate-500">
-									กราฟเปรียบเทียบร้อยละผลงานจริงกับค่าเป้าหมายของตัวชี้วัด
+									แสดงเฉพาะตัวชี้วัดกลุ่มคัดกรองภาวะแทรกซ้อน ตา ช่องปาก และเท้า
 								</p>
 							</div>
 						</div>
@@ -606,24 +769,30 @@
 							</div>
 
 							<div>
-								<h2 class="text-xl font-black text-[#063F33]">สรุปสถานะ</h2>
-								<p class="mt-1 text-sm font-medium text-slate-500">ผ่าน / ไม่ผ่าน เป้าหมาย</p>
+								<h2 class="text-xl font-black text-[#063F33]">สถานะคัดกรอง</h2>
+								<p class="mt-1 text-sm font-medium text-slate-500">
+									ผ่าน / ไม่ผ่าน เฉพาะตรวจตา ช่องปาก และเท้า
+								</p>
 							</div>
 						</div>
 
 						<div class="mt-4">
-							<StatusDonutChart rows={currentRows} />
+							<StatusDonutChart rows={screeningRows} />
 						</div>
 
 						<div class="mt-4 grid grid-cols-2 gap-3">
 							<div class="rounded-2xl bg-emerald-50 p-4">
 								<p class="text-sm font-bold text-emerald-700">ผ่าน</p>
-								<p class="mt-1 text-3xl font-black text-emerald-700">{passedCount}</p>
+								<p class="mt-1 text-3xl font-black text-emerald-700">
+									{screeningPassedCount}
+								</p>
 							</div>
 
 							<div class="rounded-2xl bg-rose-50 p-4">
 								<p class="text-sm font-bold text-rose-700">ไม่ผ่าน</p>
-								<p class="mt-1 text-3xl font-black text-rose-700">{failedCount}</p>
+								<p class="mt-1 text-3xl font-black text-rose-700">
+									{screeningFailedCount}
+								</p>
 							</div>
 						</div>
 					</section>
@@ -637,7 +806,7 @@
 							<div>
 								<h2 class="text-xl font-black text-[#063F33]">Gap จากเป้าหมาย</h2>
 								<p class="mt-1 text-sm font-medium text-slate-500">
-									เรียงจากรายการที่ควรติดตามก่อน
+									แสดงเฉพาะรายการคัดกรองที่ต่ำกว่าเป้าหมาย
 								</p>
 							</div>
 						</div>

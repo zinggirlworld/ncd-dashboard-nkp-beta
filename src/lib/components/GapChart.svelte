@@ -10,20 +10,12 @@
 		rows?: NcdIndicator[];
 	} = $props();
 
-	let chartEl: HTMLDivElement;
+	let chartEl = $state<HTMLDivElement | null>(null);
 	let chart: ECharts | null = null;
 
-	let chartRows = $derived(
-		rows
-			.filter((row) => row.gap_from_target !== null && row.gap_from_target !== undefined)
-			.sort((a, b) => (a.gap_from_target ?? 0) - (b.gap_from_target ?? 0))
-	);
-
-	let hasData = $derived(chartRows.length > 0);
+	const visibleIndicatorNos = [13, 14, 15];
 
 	function shortName(row: NcdIndicator): string {
-		if (row.indicator_no === 1) return 'ตรวจ HbA1c';
-		if (row.indicator_no === 2) return 'HbA1c < 7';
 		if (row.indicator_no === 13) return 'ตรวจตา';
 		if (row.indicator_no === 14) return 'ตรวจช่องปาก';
 		if (row.indicator_no === 15) return 'ตรวจเท้า';
@@ -31,31 +23,22 @@
 		return `ตัวชี้วัด ${row.indicator_no}`;
 	}
 
-	function formatNumber(value: number | null | undefined): string {
-		if (value === null || value === undefined) return '-';
+	let chartRows = $derived(
+		rows
+			.filter((row) => visibleIndicatorNos.includes(row.indicator_no))
+			.filter((row) => row.gap_from_target !== null)
+			.filter((row) => (row.gap_from_target ?? 0) < 0)
+			.sort((a, b) => (a.gap_from_target ?? 0) - (b.gap_from_target ?? 0))
+	);
 
-		return value.toLocaleString('th-TH', {
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2
-		});
-	}
-
-	function formatPercent(value: number | null | undefined): string {
-		if (value === null || value === undefined) return '-';
-
-		return `${value.toLocaleString('th-TH', {
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2
-		})}%`;
-	}
+	let hasData = $derived(chartRows.length > 0);
 
 	function buildOptions(): EChartsOption {
 		const labels = chartRows.map(shortName);
-		const gapData = chartRows.map((row) => Number(row.gap_from_target ?? 0));
+		const gapData = chartRows.map((row) => Number((row.gap_from_target ?? 0).toFixed(2)));
 
-		const minGap = Math.min(...gapData, 0);
-		const maxGap = Math.max(...gapData, 0);
-		const padding = Math.max(Math.abs(minGap), Math.abs(maxGap), 10) * 0.18;
+		const minGap = Math.min(...gapData, -10);
+		const axisMin = Math.floor((minGap - 5) / 10) * 10;
 
 		return {
 			backgroundColor: 'transparent',
@@ -63,80 +46,44 @@
 			tooltip: {
 				trigger: 'axis',
 				axisPointer: {
-					type: 'shadow',
-					shadowStyle: {
-						color: 'rgba(244, 63, 94, 0.06)'
-					}
+					type: 'shadow'
 				},
-				borderColor: '#FFE4E6',
+				valueFormatter: (value) => `${Number(value).toFixed(2)}`,
+				borderColor: '#FECACA',
 				borderWidth: 1,
 				backgroundColor: 'rgba(255, 255, 255, 0.96)',
 				textStyle: {
 					fontFamily: 'Tahoma',
 					color: '#334155',
 					fontWeight: 700
-				},
-				formatter: (params) => {
-					const items = Array.isArray(params) ? params : [params];
-					const first = items[0] as { dataIndex: number };
-					const row = chartRows[first.dataIndex];
-
-					if (!row) return '';
-
-					const gap = Number(row.gap_from_target ?? 0);
-					const gapColor = gap >= 0 ? '#059669' : '#E11D48';
-
-					return `
-						<div style="min-width: 240px;">
-							<div style="font-size: 13px; color: #0F766E; margin-bottom: 6px;">
-								ตัวชี้วัดที่ ${row.indicator_no}
-							</div>
-							<div style="font-size: 14px; color: #0F172A; margin-bottom: 10px; line-height: 1.4;">
-								${row.indicator_name}
-							</div>
-							<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-								<span>ผลงานจริง</span>
-								<strong>${formatPercent(row.actual_percent)}</strong>
-							</div>
-							<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-								<span>เป้าหมาย</span>
-								<strong>${row.target_text}</strong>
-							</div>
-							<div style="display: flex; justify-content: space-between;">
-								<span>Gap จากเป้าหมาย</span>
-								<strong style="color: ${gapColor};">${formatNumber(gap)}</strong>
-							</div>
-						</div>
-					`;
 				}
 			},
 
 			grid: {
-				left: 108,
-				right: 36,
+				left: 95,
+				right: 28,
 				top: 18,
-				bottom: 32
+				bottom: 36
 			},
 
 			xAxis: {
 				type: 'value',
-				min: Math.floor(minGap - padding),
-				max: Math.ceil(maxGap + padding),
+				min: axisMin,
+				max: 0,
 				axisLabel: {
 					fontFamily: 'Tahoma',
 					fontWeight: 700,
 					color: '#64748B'
 				},
-				axisLine: {
-					show: false
-				},
-				axisTick: {
-					show: false
-				},
 				splitLine: {
 					lineStyle: {
 						color: '#E2E8F0',
 						type: 'dashed'
+					}
+				},
+				axisLine: {
+					lineStyle: {
+						color: '#CBD5E1'
 					}
 				}
 			},
@@ -144,46 +91,39 @@
 			yAxis: {
 				type: 'category',
 				data: labels,
-				inverse: true,
 				axisLabel: {
 					fontFamily: 'Tahoma',
 					fontWeight: 800,
 					color: '#334155'
 				},
-				axisLine: {
+				axisTick: {
 					show: false
 				},
-				axisTick: {
+				axisLine: {
 					show: false
 				}
 			},
 
 			series: [
 				{
-					name: 'Gap',
+					name: 'Gap จากเป้าหมาย',
 					type: 'bar',
 					data: gapData,
-					barWidth: 18,
-					barMaxWidth: 22,
+					barWidth: 24,
 					itemStyle: {
-						color: (params) => {
-							const value = Number(params.value);
-							return value >= 0 ? '#10B981' : '#F43F5E';
-						},
-						borderRadius: [8, 8, 8, 8]
+						color: '#F43F5E',
+						borderRadius: [0, 999, 999, 0]
 					},
 					label: {
 						show: true,
-						position: (params) => {
-							const value = Number(params.value);
-							return value >= 0 ? 'right' : 'left';
-						},
-						formatter: (params) => formatNumber(Number(params.value)),
+						position: 'insideRight',
+						formatter: (params) => `${Number(params.value).toFixed(2)}`,
 						fontFamily: 'Tahoma',
 						fontWeight: 900,
-						color: '#334155'
+						color: '#FFFFFF'
 					},
 					markLine: {
+						silent: true,
 						symbol: 'none',
 						lineStyle: {
 							color: '#94A3B8',
@@ -193,17 +133,7 @@
 						label: {
 							show: false
 						},
-						data: [
-							{
-								xAxis: 0
-							}
-						]
-					},
-					emphasis: {
-						itemStyle: {
-							shadowBlur: 14,
-							shadowColor: 'rgba(244, 63, 94, 0.18)'
-						}
+						data: [{ xAxis: 0 }]
 					}
 				}
 			]
@@ -232,7 +162,10 @@
 	});
 
 	$effect(() => {
-		if (!hasData) return;
+		if (!hasData) {
+			chart?.clear();
+			return;
+		}
 
 		if (!chart && chartEl) {
 			chart = echarts.init(chartEl);
@@ -243,15 +176,15 @@
 </script>
 
 {#if hasData}
-	<div class="h-[320px] w-full" bind:this={chartEl}></div>
+	<div class="h-[300px] w-full" bind:this={chartEl}></div>
 {:else}
 	<div
-		class="grid h-[260px] w-full place-items-center rounded-3xl border border-dashed border-rose-200 bg-rose-50/40"
+		class="grid h-[240px] place-items-center rounded-3xl border border-emerald-100 bg-emerald-50/60"
 	>
 		<div class="text-center">
-			<p class="text-base font-black text-rose-700">ไม่มีข้อมูล Gap สำหรับแสดงกราฟ</p>
+			<p class="text-base font-black text-emerald-700">ไม่มีรายการคัดกรองที่ต่ำกว่าเป้าหมาย</p>
 			<p class="mt-1 text-sm font-semibold text-slate-500">
-				กรุณาเลือกปีงบประมาณ ช่วงเวลา หรืองวดข้อมูลใหม่
+				ตรวจตา ตรวจช่องปาก และตรวจเท้า อยู่ในเกณฑ์เป้าหมายในช่วงเวลานี้
 			</p>
 		</div>
 	</div>
