@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import * as echarts from 'echarts';
-	import type { ECharts, EChartsOption, LineSeriesOption } from 'echarts';
+	import type { ECharts, EChartsOption } from 'echarts';
 	import type { NcdIndicator } from '$lib/data';
 
 	let {
@@ -68,7 +68,7 @@
 			15: '#8B5CF6'
 		};
 
-		const series: LineSeriesOption[] = indicatorGroups.map((indicator) => {
+		const series = indicatorGroups.map((indicator) => {
 			const data = periods.map((period) => {
 				const found = monthlyRows.find(
 					(row) => row.period_order === period.order && row.indicator_no === indicator.indicator_no

@@ -10,7 +10,7 @@
 		rows?: NcdIndicator[];
 	} = $props();
 
-	let chartEl = $state<HTMLDivElement | null>(null);
+	let chartEl: HTMLDivElement;
 	let chart: ECharts | null = null;
 
 	let passedCount = $derived(rows.filter((row) => row.status === 'ผ่าน').length);
@@ -135,7 +135,7 @@
 						fontFamily: 'Tahoma',
 						fontWeight: 700,
 						fontSize: 13,
-						align: 'center'
+						textAlign: 'center'
 					}
 				},
 				{
@@ -148,7 +148,7 @@
 						fontFamily: 'Tahoma',
 						fontWeight: 900,
 						fontSize: 26,
-						align: 'center'
+						textAlign: 'center'
 					}
 				},
 				{
@@ -161,7 +161,7 @@
 						fontFamily: 'Tahoma',
 						fontWeight: 700,
 						fontSize: 12,
-						align: 'center'
+						textAlign: 'center'
 					}
 				}
 			],

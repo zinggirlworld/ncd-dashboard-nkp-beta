@@ -10,7 +10,7 @@
 		rows?: FootRiskRow[];
 	} = $props();
 
-	let chartEl: HTMLDivElement;
+	let chartEl = $state<HTMLDivElement | null>(null);
 	let chart: ECharts | null = null;
 
 	let chartRows = $derived(
@@ -131,7 +131,7 @@
 						fontFamily: 'Tahoma',
 						fontWeight: 700,
 						fontSize: 13,
-						textAlign: 'center'
+						align: 'center'
 					}
 				},
 				{
@@ -144,7 +144,7 @@
 						fontFamily: 'Tahoma',
 						fontWeight: 900,
 						fontSize: 26,
-						textAlign: 'center'
+						align: 'center'
 					}
 				},
 				{
@@ -157,7 +157,7 @@
 						fontFamily: 'Tahoma',
 						fontWeight: 700,
 						fontSize: 12,
-						textAlign: 'center'
+						align: 'center'
 					}
 				}
 			],

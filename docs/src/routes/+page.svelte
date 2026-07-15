@@ -8,7 +8,6 @@
 	import MonthlyTrendChart from '$lib/components/MonthlyTrendChart.svelte';
 	import ActualTargetChart from '$lib/components/ActualTargetChart.svelte';
 	import FootRiskChart from '$lib/components/FootRiskChart.svelte';
-	import StatusDonutChart from '$lib/components/StatusDonutChart.svelte';
 
 	import {
 		Activity,
@@ -163,20 +162,6 @@
 			.sort((a, b) => a.risk_order - b.risk_order)
 	);
 
-	let footRiskTotal = $derived(
-		currentFootRiskRows.reduce((sum, row) => sum + (row.total_hn ?? 0), 0)
-	);
-
-	let footHighRiskTotal = $derived(
-		currentFootRiskRows
-			.filter((row) => row.risk_code === 'Z0282' || row.risk_code === 'Z0283')
-			.reduce((sum, row) => sum + (row.total_hn ?? 0), 0)
-	);
-
-	let footHighRiskPercent = $derived(
-		footRiskTotal > 0 ? (footHighRiskTotal * 100) / footRiskTotal : 0
-	);
-
 	let totalIndicators = $derived(currentRows.length);
 	let passedCount = $derived(currentRows.filter((r) => r.status === 'ผ่าน').length);
 	let failedCount = $derived(currentRows.filter((r) => r.status === 'ไม่ผ่าน').length);
@@ -222,22 +207,6 @@
 			.sort((a, b) => (a.gap_from_target ?? 0) - (b.gap_from_target ?? 0))
 			.slice(0, 3)
 	);
-
-	let executiveInsight = $derived.by(() => {
-		if (totalIndicators === 0) {
-			return 'ยังไม่มีข้อมูลในงวดที่เลือก กรุณาตรวจสอบไฟล์ CSV หรือเลือกงวดข้อมูลอื่น';
-		}
-
-		if (urgentRows.length > 0) {
-			return `ควรเร่งติดตาม ${urgentRows.map(getShortIndicatorName).join(', ')} เพื่อปิดช่องว่างจากเป้าหมายในงวดนี้`;
-		}
-
-		if (failedCount > 0) {
-			return 'ภาพรวมยังมีบางตัวชี้วัดต่ำกว่าเป้าหมาย ควรติดตามรายข้อในตารางรายละเอียด';
-		}
-
-		return 'ภาพรวมตัวชี้วัดในงวดนี้ผ่านเป้าหมายทั้งหมด เหมาะสำหรับนำเสนอผลการดำเนินงาน';
-	});
 
 	let detailRows = $derived<DetailRow[]>(
 		indicatorMaster.map((master) => {
@@ -436,9 +405,8 @@
 					</h1>
 
 					<p class="mt-2 text-sm font-semibold text-emerald-800 md:text-base">
-						คลินิกเบาหวาน โรงพยาบาลนครพิงค์ | ระบบติดตามตัวชี้วัด NCD, การคัดกรองภาวะแทรกซ้อน และความเสี่ยงเท้า
+						คลินิกเบาหวาน โรงพยาบาลนครพิงค์ | สรุปผลตามปีงบประมาณ สำหรับคณะกรรมการตรวจติดตาม
 					</p>
-
 				</div>
 
 				<div class="grid min-w-[320px] grid-cols-1 gap-3 sm:grid-cols-3">
@@ -508,7 +476,8 @@
 				</p>
 
 				<p class="mt-2 text-sm font-semibold text-amber-700">
-					ยังไม่พบข้อมูลในงวดที่เลือก กรุณาตรวจสอบว่าไฟล์ ncd_indicator_summary.csv มีข้อมูล period_type และ period_order ตรงกับตัวเลือกปัจจุบัน
+					ขณะนี้ไฟล์ CSV มีข้อมูลระดับปีงบประมาณแล้ว หากต้องการดูระดับไตรมาสหรือรายเดือน
+					ต้อง Export ข้อมูลเพิ่มในรูปแบบ period_type = ไตรมาส หรือ เดือน
 				</p>
 
 				<button
@@ -523,7 +492,7 @@
 				</button>
 			</section>
 		{:else}
-			<section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
+			<section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
 				<div
 					class="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
 				>
@@ -595,20 +564,6 @@
 				</div>
 
 				<div
-					class="rounded-[1.5rem] border border-indigo-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-				>
-					<div class="flex items-center justify-between">
-						<p class="text-sm font-black text-slate-500">อัตราผ่านภาพรวม</p>
-						<div class="grid h-11 w-11 place-items-center rounded-2xl bg-indigo-50 text-indigo-700">
-							<Target size={22} strokeWidth={2.5} />
-						</div>
-					</div>
-
-					<p class="mt-3 text-5xl font-black text-indigo-600">{formatPercent(passRate)}</p>
-					<p class="mt-2 text-sm font-semibold text-slate-500">ผ่าน {passedCount} จาก {totalIndicators} ตัวชี้วัด</p>
-				</div>
-
-				<div
 					class="rounded-[1.5rem] border border-teal-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
 				>
 					<div class="flex items-center justify-between">
@@ -622,55 +577,6 @@
 					<p class="mt-2 text-sm font-semibold text-slate-500">
 						ค่าเฉลี่ยร้อยละของตัวชี้วัดที่มีข้อมูล
 					</p>
-				</div>
-			</section>
-
-			<section class="grid grid-cols-1 gap-5 xl:grid-cols-[0.72fr_1.28fr]">
-				<div class="rounded-[1.75rem] border border-emerald-100 bg-white p-5 shadow-sm">
-					<div class="flex items-center justify-between gap-3">
-						<div>
-							<p class="text-sm font-black text-emerald-700">Executive Status</p>
-							<h2 class="mt-1 text-2xl font-black text-[#063F33]">ภาพรวมสถานะตัวชี้วัด</h2>
-						</div>
-						<span class="rounded-full bg-emerald-50 px-4 py-2 text-xs font-black text-emerald-700 ring-1 ring-emerald-100">
-							{currentPeriodLabel}
-						</span>
-					</div>
-
-					<div class="mt-4">
-						<StatusDonutChart rows={currentRows} />
-					</div>
-				</div>
-
-				<div class="rounded-[1.75rem] border border-emerald-100 bg-white p-5 shadow-sm">
-					<div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-						<div>
-							<p class="text-sm font-black text-emerald-700">ข้อสรุปสำหรับการนำเสนอผู้ตรวจ</p>
-							<h2 class="mt-1 text-2xl font-black text-[#063F33]">Executive Brief</h2>
-						</div>
-						<span class="rounded-full bg-slate-50 px-4 py-2 text-xs font-black text-slate-600 ring-1 ring-slate-100">
-							ปีงบประมาณ {selectedYear}
-						</span>
-					</div>
-
-					<div class="mt-5 rounded-3xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-white p-5">
-						<p class="text-base leading-7 font-bold text-slate-700">{executiveInsight}</p>
-					</div>
-
-					<div class="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
-						<div class="rounded-2xl bg-emerald-50 p-4 ring-1 ring-emerald-100">
-							<p class="text-xs font-black text-emerald-700">คัดกรองผ่านเป้าหมาย</p>
-							<p class="mt-1 text-3xl font-black text-emerald-700">{screeningPassedCount}</p>
-						</div>
-						<div class="rounded-2xl bg-rose-50 p-4 ring-1 ring-rose-100">
-							<p class="text-xs font-black text-rose-700">คัดกรองต้องติดตาม</p>
-							<p class="mt-1 text-3xl font-black text-rose-700">{screeningFailedCount}</p>
-						</div>
-						<div class="rounded-2xl bg-amber-50 p-4 ring-1 ring-amber-100">
-							<p class="text-xs font-black text-amber-700">เท้าเสี่ยงสูงขึ้นไป</p>
-							<p class="mt-1 text-3xl font-black text-amber-700">{formatPercent(footHighRiskPercent)}</p>
-						</div>
-					</div>
 				</div>
 			</section>
 
@@ -1045,39 +951,7 @@
 						</p>
 					</div>
 				{:else}
-					<div class="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_0.75fr]">
-						<FootRiskChart rows={currentFootRiskRows} />
-
-						<div class="rounded-3xl border border-amber-100 bg-amber-50/60 p-5">
-							<p class="text-sm font-black text-amber-800">คำอธิบายระดับความเสี่ยงเท้า</p>
-							<div class="mt-4 space-y-3">
-								<div class="flex items-center justify-between rounded-2xl bg-white px-4 py-3 ring-1 ring-emerald-100">
-									<span class="font-black text-emerald-700">Z0280 เสี่ยงต่ำ</span>
-									<span class="font-bold text-slate-600">ติดตามตามนัด</span>
-								</div>
-								<div class="flex items-center justify-between rounded-2xl bg-white px-4 py-3 ring-1 ring-amber-100">
-									<span class="font-black text-amber-700">Z0281 เสี่ยงปานกลาง</span>
-									<span class="font-bold text-slate-600">เน้นให้ความรู้</span>
-								</div>
-								<div class="flex items-center justify-between rounded-2xl bg-white px-4 py-3 ring-1 ring-orange-100">
-									<span class="font-black text-orange-700">Z0282 เสี่ยงสูง</span>
-									<span class="font-bold text-slate-600">ติดตามใกล้ชิด</span>
-								</div>
-								<div class="flex items-center justify-between rounded-2xl bg-white px-4 py-3 ring-1 ring-rose-100">
-									<span class="font-black text-rose-700">Z0283 เสี่ยงสูงมาก</span>
-									<span class="font-bold text-slate-600">เร่งดูแลเชิงรุก</span>
-								</div>
-							</div>
-
-							<div class="mt-5 rounded-2xl bg-white p-4 ring-1 ring-amber-100">
-								<p class="text-xs font-black text-slate-500">จำนวนผู้ป่วยที่ประเมินความเสี่ยงเท้า</p>
-								<p class="mt-1 text-3xl font-black text-amber-700">{formatNumber(footRiskTotal)} HN</p>
-								<p class="mt-2 text-sm font-semibold text-slate-500">
-									เสี่ยงสูงขึ้นไป {formatNumber(footHighRiskTotal)} HN ({formatPercent(footHighRiskPercent)})
-								</p>
-							</div>
-						</div>
-					</div>
+					<FootRiskChart rows={currentFootRiskRows} />
 				{/if}
 			</section>
 
@@ -1135,9 +1009,9 @@
 
 				{#if showDetailTable}
 					<div class="mt-5 overflow-x-auto">
-						<table class="w-full border-separate border-spacing-0 text-left text-sm">
-							<thead class="sticky top-0 z-10">
-								<tr class="border-b bg-emerald-50 text-emerald-900 shadow-sm">
+						<table class="w-full border-collapse text-left text-sm">
+							<thead>
+								<tr class="border-b bg-emerald-50 text-emerald-900">
 									<th class="px-4 py-3 whitespace-nowrap">ลำดับ</th>
 									<th class="px-4 py-3 whitespace-nowrap">หมวด</th>
 									<th class="min-w-[460px] px-4 py-3">ตัวชี้วัด</th>
@@ -1154,7 +1028,7 @@
 								{#each detailRows as row}
 									<tr
 										class={`border-b ${
-											row.hasData ? 'bg-white hover:bg-emerald-50/60 even:bg-slate-50/40' : 'bg-slate-50/70 text-slate-400'
+											row.hasData ? 'hover:bg-emerald-50/60' : 'bg-slate-50/70 text-slate-400'
 										}`}
 									>
 										<td

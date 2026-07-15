@@ -44,7 +44,7 @@ function cleanText(value: unknown): string {
 }
 
 export async function loadNcdIndicators(): Promise<NcdIndicator[]> {
-	const response = await fetch(`${NCD_CSV_URL}?v=${Date.now()}`, {
+	const response = await fetch(NCD_CSV_URL, {
 		cache: 'no-store'
 	});
 

@@ -26,7 +26,7 @@ function cleanText(value: unknown): string {
 }
 
 export async function loadFootRiskSummary(): Promise<FootRiskRow[]> {
-	const response = await fetch(`${FOOT_RISK_CSV_URL}?v=${Date.now()}`, {
+	const response = await fetch(FOOT_RISK_CSV_URL, {
 		cache: 'no-store'
 	});
 
