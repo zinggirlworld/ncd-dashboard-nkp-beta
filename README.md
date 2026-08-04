@@ -1,57 +1,49 @@
 # NCD Dashboard NKP
 
-Dashboard ตัวชี้วัด NCD / Diabetes Screening สำหรับคลินิก 0105 โรงพยาบาลนครพิงค์
+Dashboard ติดตามตัวชี้วัด NCD การคัดกรองภาวะแทรกซ้อนจากโรคเบาหวาน และความเสี่ยงเท้า สำหรับคลินิกเบาหวาน โรงพยาบาลนครพิงค์
 
-## วิธีใช้งานแบบ GitHub Pages / Static Site
+## ขอบเขตข้อมูล
 
-วางไฟล์ข้อมูลไว้ที่:
+ระบบรองรับเฉพาะ 2 ระดับเวลา:
+
+- ปีงบประมาณ
+- ไตรมาส 1–4
+
+ไม่มี UI, data filter, chart หรือ CSV contract ระดับเดือน
+
+## เริ่มต้นใช้งาน
+
+```bash
+npm ci
+npm run check
+npm run build
+npm run dev
+```
+
+> หลีกเลี่ยง `npm audit fix --force` เพราะอาจ downgrade SvelteKit แบบ breaking change
+
+## ไฟล์ข้อมูล
+
+วางไฟล์ไว้ใน `static/`:
 
 ```text
 static/ncd_indicator_summary.csv
 static/foot_risk_summary.csv
 ```
 
-จากนั้นรันในเครื่อง:
+จำนวนข้อมูลที่คาดหวัง:
 
-```bash
-npm install
-npm run dev
-```
+- `ncd_indicator_summary.csv` 360 แถว: ปีงบประมาณ 72 + ไตรมาส 288
+- `foot_risk_summary.csv` 76 แถว: ปีงบประมาณ 16 + ไตรมาส 60
 
-Build สำหรับ publish:
-
-```bash
-npm run build
-```
-
-## โครงข้อมูลหลัก
-
-`ncd_indicator_summary.csv` ต้องมี column:
+## SQL สำหรับ Navicat
 
 ```text
-period_type,fiscal_year_be,period_order,period_label,indicator_no,indicator_name,target_text,target_type,target_value,numerator,denominator,actual_percent,status,gap_from_target
+sql/ncd_indicator_export_year_only_2566_2569_no_bom.sql
+sql/ncd_indicator_export_quarter_only_2566_2569_no_bom.sql
+sql/foot_risk_summary_export_no_bom.sql
 ```
 
-Dashboard รองรับ:
+## GitHub Pages
 
-- ปีงบประมาณ
-- ไตรมาส
-- เดือน
-
-ถ้า CSV มีแค่ปีงบประมาณ ระบบจะแสดงข้อความแจ้งเมื่อเลือกไตรมาสหรือเดือน
-
-## หมายเหตุเรื่อง SSBDATABASE
-
-GitHub Pages เป็น Static Site จึงต่อ SSBDATABASE โดยตรงไม่ได้อย่างปลอดภัย ถ้าต้องการ Auto Update ให้ดูเอกสาร:
-
-```text
-docs/SSBDATABASE_AUTO_UPDATE.md
-```
-
-## SQL
-
-ไฟล์ SQL สำหรับ export อยู่ในโฟลเดอร์:
-
-```text
-sql/
-```
+Workflow จะกำหนด base path จากชื่อ repository อัตโนมัติผ่าน `BASE_PATH` จึงไม่ต้องแก้ชื่อ repository ใน source code ทุกครั้ง

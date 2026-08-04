@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import * as echarts from 'echarts';
 	import type { ECharts, EChartsOption } from 'echarts';
 	import type { NcdIndicator } from '$lib/data';
@@ -199,46 +198,42 @@
 		};
 	}
 
-	function renderChart() {
-		if (!chart || !hasData) return;
+	$effect(() => {
+		if (!chartEl || !hasData) {
+			if (chart) {
+				chart.dispose();
+				chart = null;
+			}
+			return;
+		}
+
+		if (!chart) {
+			chart = echarts.init(chartEl);
+		}
+
 		chart.setOption(buildOptions(), true);
-	}
-
-	onMount(() => {
-		if (!chartEl || !hasData) return;
-
-		chart = echarts.init(chartEl);
-		renderChart();
 
 		const handleResize = () => chart?.resize();
 		window.addEventListener('resize', handleResize);
 
 		return () => {
 			window.removeEventListener('resize', handleResize);
-			chart?.dispose();
-			chart = null;
+			if (chart) {
+				chart.dispose();
+				chart = null;
+			}
 		};
-	});
-
-	$effect(() => {
-		if (!hasData) return;
-
-		if (!chart && chartEl) {
-			chart = echarts.init(chartEl);
-		}
-
-		renderChart();
 	});
 </script>
 
 {#if hasData}
-	<div class="h-[300px] w-full" bind:this={chartEl}></div>
+	<div role="img" aria-label="กราฟสัดส่วนตัวชี้วัดที่ผ่านและไม่ผ่านเป้าหมาย" class="h-[280px] w-full sm:h-[300px]" bind:this={chartEl}></div>
 {:else}
 	<div
 		class="grid h-[260px] w-full place-items-center rounded-3xl border border-dashed border-emerald-200 bg-emerald-50/50"
 	>
 		<div class="text-center">
-			<p class="text-base font-black text-emerald-700">ไม่มีข้อมูลสถานะสำหรับแสดงกราฟ</p>
+			<p role="status" class="text-base font-black text-emerald-700">ไม่มีข้อมูลสถานะสำหรับแสดงกราฟ</p>
 			<p class="mt-1 text-sm font-semibold text-slate-500">
 				กรุณาเลือกปีงบประมาณ ช่วงเวลา หรืองวดข้อมูลใหม่
 			</p>

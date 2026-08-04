@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import * as echarts from 'echarts';
 	import type { ECharts, EChartsOption } from 'echarts';
 	import type { NcdIndicator } from '$lib/data';
@@ -150,42 +149,38 @@
 		};
 	}
 
-	function renderChart() {
-		if (!chart || !hasData) return;
+	$effect(() => {
+		if (!chartEl || !hasData) {
+			if (chart) {
+				chart.dispose();
+				chart = null;
+			}
+			return;
+		}
+
+		if (!chart) {
+			chart = echarts.init(chartEl);
+		}
+
 		chart.setOption(buildOptions(), true);
-	}
-
-	onMount(() => {
-		if (!chartEl || !hasData) return;
-
-		chart = echarts.init(chartEl);
-		renderChart();
 
 		const handleResize = () => chart?.resize();
 		window.addEventListener('resize', handleResize);
 
 		return () => {
 			window.removeEventListener('resize', handleResize);
-			chart?.dispose();
-			chart = null;
+			if (chart) {
+				chart.dispose();
+				chart = null;
+			}
 		};
-	});
-
-	$effect(() => {
-		if (!hasData) return;
-
-		if (!chart && chartEl) {
-			chart = echarts.init(chartEl);
-		}
-
-		renderChart();
 	});
 </script>
 
 {#if hasData}
-	<div class="h-[360px] w-full" bind:this={chartEl}></div>
+	<div role="img" aria-label="กราฟเปรียบเทียบผลงานจริงกับเป้าหมายของการตรวจตา ช่องปาก และเท้า" class="h-[320px] w-full sm:h-[360px]" bind:this={chartEl}></div>
 {:else}
 	<div class="grid h-[280px] place-items-center rounded-3xl border border-dashed border-slate-200">
-		<p class="font-bold text-slate-400">ไม่มีข้อมูลผลงานเทียบเป้าหมาย</p>
+		<p role="status" class="font-bold text-slate-500">ไม่มีข้อมูลผลงานเทียบเป้าหมาย</p>
 	</div>
 {/if}

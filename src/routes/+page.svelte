@@ -5,7 +5,6 @@
 	import { loadFootRiskSummary, type FootRiskRow } from '$lib/footRiskData';
 	import { indicatorMaster } from '$lib/indicatorMaster';
 
-	import MonthlyTrendChart from '$lib/components/MonthlyTrendChart.svelte';
 	import ActualTargetChart from '$lib/components/ActualTargetChart.svelte';
 	import FootRiskChart from '$lib/components/FootRiskChart.svelte';
 	import StatusDonutChart from '$lib/components/StatusDonutChart.svelte';
@@ -17,9 +16,7 @@
 		ChevronDown,
 		ClipboardList,
 		Footprints,
-		LineChart,
 		Target,
-		UsersRound,
 		XCircle
 	} from 'lucide-svelte';
 
@@ -61,7 +58,7 @@
 		[...new Set(rows.map((r) => r.fiscal_year_be))].filter((year) => year > 0).sort((a, b) => b - a)
 	);
 
-	let periodTypes = $derived(['ปีงบประมาณ', 'ไตรมาส', 'เดือน']);
+	let periodTypes = $derived(['ปีงบประมาณ', 'ไตรมาส']);
 
 	let filteredRows = $derived(
 		rows
@@ -99,22 +96,6 @@
 			];
 		}
 
-		if (selectedPeriodType === 'เดือน') {
-			return [
-				{ order: 1, label: 'ต.ค.' },
-				{ order: 2, label: 'พ.ย.' },
-				{ order: 3, label: 'ธ.ค.' },
-				{ order: 4, label: 'ม.ค.' },
-				{ order: 5, label: 'ก.พ.' },
-				{ order: 6, label: 'มี.ค.' },
-				{ order: 7, label: 'เม.ย.' },
-				{ order: 8, label: 'พ.ค.' },
-				{ order: 9, label: 'มิ.ย.' },
-				{ order: 10, label: 'ก.ค.' },
-				{ order: 11, label: 'ส.ค.' },
-				{ order: 12, label: 'ก.ย.' }
-			];
-		}
 
 		return [{ order: 0, label: `ปีงบประมาณ ${selectedYear}` }];
 	});
@@ -133,7 +114,7 @@
 	);
 
 	let currentRows = $derived(
-		selectedPeriodType === 'เดือน' || selectedPeriodType === 'ไตรมาส'
+		selectedPeriodType === 'ไตรมาส'
 			? filteredRows.filter((r) => r.period_order === activePeriodOrder)
 			: filteredRows
 	);
@@ -156,7 +137,7 @@
 			.filter((row) => row.fiscal_year_be === selectedYear)
 			.filter((row) => row.period_type === selectedPeriodType)
 			.filter((row) =>
-				selectedPeriodType === 'เดือน' || selectedPeriodType === 'ไตรมาส'
+				selectedPeriodType === 'ไตรมาส'
 					? row.period_order === activePeriodOrder
 					: true
 			)
@@ -180,6 +161,9 @@
 	let totalIndicators = $derived(currentRows.length);
 	let passedCount = $derived(currentRows.filter((r) => r.status === 'ผ่าน').length);
 	let failedCount = $derived(currentRows.filter((r) => r.status === 'ไม่ผ่าน').length);
+	let noDataCount = $derived(
+		currentRows.filter((r) => r.status !== 'ผ่าน' && r.status !== 'ไม่ผ่าน').length
+	);
 
 	let screeningPassedCount = $derived(screeningRows.filter((r) => r.status === 'ผ่าน').length);
 	let screeningFailedCount = $derived(screeningRows.filter((r) => r.status === 'ไม่ผ่าน').length);
@@ -404,10 +388,14 @@
 </script>
 
 <svelte:head>
-	<title>สรุปข้อมูลการตรวจคัดกรองภาวะแทรกซ้อนจากโรคเบาหวาน</title>
+	<title>Dashboard ตัวชี้วัด NCD และการคัดกรองภาวะแทรกซ้อนเบาหวาน</title>
+	<meta
+		name="description"
+		content="Dashboard ติดตามตัวชี้วัด NCD การคัดกรองภาวะแทรกซ้อน และความเสี่ยงเท้า คลินิกเบาหวาน โรงพยาบาลนครพิงค์"
+	/>
 </svelte:head>
 
-<div class="min-h-screen bg-[#EAF7F2] px-4 py-5 text-slate-800 md:px-8">
+<main class="min-h-screen bg-[#EAF7F2] px-4 py-5 text-slate-800 md:px-8">
 	<div class="mx-auto max-w-7xl space-y-5">
 		<header
 			class="overflow-hidden rounded-[1.75rem] border border-emerald-200 bg-gradient-to-r from-[#B9F4D8] via-[#C9F7E8] to-[#DDFBF1] p-5 shadow-[0_18px_50px_rgba(16,185,129,0.12)]"
@@ -441,11 +429,12 @@
 
 				</div>
 
-				<div class="grid min-w-[320px] grid-cols-1 gap-3 sm:grid-cols-3">
-					<label class="text-sm font-black text-emerald-900">
+				<div class={`grid w-full gap-3 xl:max-w-2xl ${selectedPeriodType === 'ไตรมาส' ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
+					<label for="fiscal-year" class="text-sm font-black text-emerald-900">
 						ปีงบประมาณ
 						<select
-							class="mt-1 w-full rounded-2xl border border-emerald-300 bg-white px-4 py-3 font-bold text-emerald-900 shadow-sm transition outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+							id="fiscal-year"
+							class="mt-1 min-h-11 w-full rounded-2xl border border-emerald-300 bg-white px-4 py-3 font-bold text-emerald-900 shadow-sm transition outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
 							bind:value={selectedYear}
 							onchange={() => {
 								selectedPeriodOrder = null;
@@ -457,10 +446,11 @@
 						</select>
 					</label>
 
-					<label class="text-sm font-black text-emerald-900">
+					<label for="period-type" class="text-sm font-black text-emerald-900">
 						ช่วงเวลา
 						<select
-							class="mt-1 w-full rounded-2xl border border-emerald-300 bg-white px-4 py-3 font-bold text-emerald-900 shadow-sm transition outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+							id="period-type"
+							class="mt-1 min-h-11 w-full rounded-2xl border border-emerald-300 bg-white px-4 py-3 font-bold text-emerald-900 shadow-sm transition outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
 							bind:value={selectedPeriodType}
 							onchange={() => {
 								selectedPeriodOrder = null;
@@ -473,10 +463,11 @@
 					</label>
 
 					{#if selectedPeriodType !== 'ปีงบประมาณ'}
-						<label class="text-sm font-black text-emerald-900">
+						<label for="period-order" class="text-sm font-black text-emerald-900">
 							งวดข้อมูล
 							<select
-								class="mt-1 w-full rounded-2xl border border-emerald-300 bg-white px-4 py-3 font-bold text-emerald-900 shadow-sm transition outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+								id="period-order"
+								class="mt-1 min-h-11 w-full rounded-2xl border border-emerald-300 bg-white px-4 py-3 font-bold text-emerald-900 shadow-sm transition outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
 								value={activePeriodOrder}
 								onchange={handlePeriodOrderChange}
 							>
@@ -491,14 +482,14 @@
 		</header>
 
 		{#if loading}
-			<section class="rounded-3xl border border-emerald-100 bg-white p-6 shadow-sm">
+			<section aria-live="polite" class="rounded-3xl border border-emerald-100 bg-white p-6 shadow-sm">
 				<p class="font-bold text-emerald-700">กำลังโหลดข้อมูล...</p>
 			</section>
 		{:else if errorMessage}
-			<section class="rounded-3xl border border-rose-100 bg-rose-50 p-6 shadow-sm">
+			<section role="alert" class="rounded-3xl border border-rose-100 bg-rose-50 p-6 shadow-sm">
 				<p class="font-bold text-rose-700">{errorMessage}</p>
 				<p class="mt-2 text-sm text-rose-600">
-					กรุณาตรวจสอบ CSV URL ในไฟล์ src/lib/data.ts หรือทดสอบเปิดลิงก์ CSV ใน Browser
+					กรุณาตรวจสอบไฟล์ข้อมูลของระบบ หรือลองโหลดหน้าเว็บใหม่อีกครั้ง
 				</p>
 			</section>
 		{:else if totalIndicators === 0}
@@ -532,7 +523,7 @@
 						<div
 							class="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-50 text-emerald-700"
 						>
-							<ClipboardList size={22} strokeWidth={2.5} />
+							<ClipboardList aria-hidden="true" size={22} strokeWidth={2.5} />
 						</div>
 					</div>
 
@@ -546,22 +537,17 @@
 				</div>
 
 				<div
-					class="rounded-[1.5rem] border border-sky-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+					class="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
 				>
 					<div class="flex items-center justify-between">
-						<p class="text-sm font-black text-slate-500">ผู้ป่วยเข้าคลินิก</p>
-						<div class="grid h-11 w-11 place-items-center rounded-2xl bg-sky-50 text-sky-700">
-							<UsersRound size={22} strokeWidth={2.5} />
+						<p class="text-sm font-black text-slate-500">ไม่มีข้อมูล</p>
+						<div class="grid h-11 w-11 place-items-center rounded-2xl bg-slate-100 text-slate-600">
+							<AlertTriangle aria-hidden="true" size={22} strokeWidth={2.5} />
 						</div>
 					</div>
 
-					<p class="mt-3 text-5xl font-black text-sky-700">
-						{formatNumber(clinicPatientTotal)}
-					</p>
-
-					<p class="mt-2 text-sm font-semibold text-slate-500">
-						HN ไม่ซ้ำ | {currentPeriodLabel} ปีงบประมาณ {selectedYear}
-					</p>
+					<p class="mt-3 text-5xl font-black text-slate-600">{noDataCount + waitingCount}</p>
+					<p class="mt-2 text-sm font-semibold text-slate-500">รายการที่ยังไม่พร้อมประเมิน</p>
 				</div>
 
 				<div
@@ -572,7 +558,7 @@
 						<div
 							class="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-50 text-emerald-700"
 						>
-							<CheckCircle2 size={22} strokeWidth={2.5} />
+							<CheckCircle2 aria-hidden="true" size={22} strokeWidth={2.5} />
 						</div>
 					</div>
 
@@ -586,7 +572,7 @@
 					<div class="flex items-center justify-between">
 						<p class="text-sm font-black text-slate-500">ไม่ผ่านเป้าหมายภาพรวม</p>
 						<div class="grid h-11 w-11 place-items-center rounded-2xl bg-rose-50 text-rose-600">
-							<XCircle size={22} strokeWidth={2.5} />
+							<XCircle aria-hidden="true" size={22} strokeWidth={2.5} />
 						</div>
 					</div>
 
@@ -600,7 +586,7 @@
 					<div class="flex items-center justify-between">
 						<p class="text-sm font-black text-slate-500">อัตราผ่านภาพรวม</p>
 						<div class="grid h-11 w-11 place-items-center rounded-2xl bg-indigo-50 text-indigo-700">
-							<Target size={22} strokeWidth={2.5} />
+							<Target aria-hidden="true" size={22} strokeWidth={2.5} />
 						</div>
 					</div>
 
@@ -614,7 +600,7 @@
 					<div class="flex items-center justify-between">
 						<p class="text-sm font-black text-slate-500">ผลงานเฉลี่ยภาพรวม</p>
 						<div class="grid h-11 w-11 place-items-center rounded-2xl bg-teal-50 text-teal-700">
-							<Activity size={22} strokeWidth={2.5} />
+							<Activity aria-hidden="true" size={22} strokeWidth={2.5} />
 						</div>
 					</div>
 
@@ -794,7 +780,7 @@
 				<div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 					<div class="flex items-center gap-3">
 						<div class="grid h-11 w-11 place-items-center rounded-2xl bg-amber-100 text-amber-700">
-							<AlertTriangle size={23} strokeWidth={2.5} />
+							<AlertTriangle aria-hidden="true" size={23} strokeWidth={2.5} />
 						</div>
 
 						<div>
@@ -867,51 +853,13 @@
 				{/if}
 			</section>
 
-			<section class="rounded-[1.75rem] border border-emerald-100 bg-white p-5 shadow-sm">
-				<div class="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-					<div class="flex items-center gap-3">
-						<div
-							class="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-50 text-emerald-700"
-						>
-							<LineChart size={23} strokeWidth={2.5} />
-						</div>
-
-						<div>
-							<h2 class="text-2xl font-black text-[#063F33]">แนวโน้มผลงานรายเดือน</h2>
-							<p class="mt-1 text-sm font-medium text-slate-500">
-								แสดงแนวโน้มร้อยละของการตรวจตา ตรวจช่องปาก และตรวจเท้า
-							</p>
-						</div>
-					</div>
-
-					<p class="rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
-						ปีงบประมาณ {selectedYear}
-					</p>
-				</div>
-
-				{#if rows.some((row) => row.period_type === 'เดือน' && row.fiscal_year_be === selectedYear)}
-					<MonthlyTrendChart {rows} {selectedYear} />
-				{:else}
-					<div
-						class="grid min-h-[280px] place-items-center rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50 text-center"
-					>
-						<div class="px-6">
-							<p class="text-base font-black text-slate-500">ยังไม่มีข้อมูลแนวโน้มรายเดือน</p>
-							<p class="mt-2 text-sm font-semibold text-slate-400">
-								ขณะนี้มีข้อมูลระดับปีงบประมาณแล้ว หากต้องการกราฟรายเดือน ต้อง Export CSV แบบ
-								period_type = เดือน เพิ่ม
-							</p>
-						</div>
-					</div>
-				{/if}
-			</section>
 
 			<section class="grid grid-cols-1 gap-5 xl:grid-cols-[1.45fr_0.85fr]">
 				<div class="rounded-[1.75rem] border border-emerald-100 bg-white p-5 shadow-sm">
 					<div class="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
 						<div class="flex items-center gap-3">
 							<div class="grid h-11 w-11 place-items-center rounded-2xl bg-teal-50 text-teal-700">
-								<Target size={23} strokeWidth={2.5} />
+								<Target aria-hidden="true" size={23} strokeWidth={2.5} />
 							</div>
 
 							<div>
@@ -933,7 +881,7 @@
 				<section class="rounded-[1.75rem] border border-emerald-100 bg-white p-5 shadow-sm">
 					<div class="flex items-center gap-3">
 						<div class="grid h-10 w-10 place-items-center rounded-2xl bg-rose-50 text-rose-600">
-							<CheckCircle2 size={21} strokeWidth={2.5} />
+							<CheckCircle2 aria-hidden="true" size={21} strokeWidth={2.5} />
 						</div>
 
 						<div>
@@ -1020,7 +968,7 @@
 				<div class="mb-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
 					<div class="flex items-center gap-3">
 						<div class="grid h-11 w-11 place-items-center rounded-2xl bg-amber-50 text-amber-700">
-							<Footprints size={23} strokeWidth={2.5} />
+							<Footprints aria-hidden="true" size={23} strokeWidth={2.5} />
 						</div>
 
 						<div>
@@ -1085,7 +1033,7 @@
 				<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 					<div class="flex items-center gap-3">
 						<div class="grid h-11 w-11 place-items-center rounded-2xl bg-slate-50 text-slate-600">
-							<ClipboardList size={23} strokeWidth={2.5} />
+							<ClipboardList aria-hidden="true" size={23} strokeWidth={2.5} />
 						</div>
 
 						<div>
@@ -1121,9 +1069,12 @@
 						<button
 							type="button"
 							class="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-2 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700"
+							aria-expanded={showDetailTable}
+							aria-controls="indicator-detail-table"
 							onclick={() => (showDetailTable = !showDetailTable)}
 						>
 							<ChevronDown
+								aria-hidden="true"
 								size={17}
 								strokeWidth={3}
 								class={showDetailTable ? 'rotate-180 transition' : 'transition'}
@@ -1134,8 +1085,9 @@
 				</div>
 
 				{#if showDetailTable}
-					<div class="mt-5 overflow-x-auto">
+					<div id="indicator-detail-table" class="mt-5 max-h-[70vh] overflow-auto rounded-2xl border border-slate-100">
 						<table class="w-full border-separate border-spacing-0 text-left text-sm">
+							<caption class="sr-only">รายละเอียดตัวชี้วัด NCD จำนวน 18 ข้อ พร้อมเป้าหมาย ผลงาน และสถานะ</caption>
 							<thead class="sticky top-0 z-10">
 								<tr class="border-b bg-emerald-50 text-emerald-900 shadow-sm">
 									<th class="px-4 py-3 whitespace-nowrap">ลำดับ</th>
@@ -1232,4 +1184,4 @@
 			</section>
 		{/if}
 	</div>
-</div>
+</main>
