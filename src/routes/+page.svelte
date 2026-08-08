@@ -281,13 +281,18 @@
 		});
 	}
 
-	function formatPercent(value: number | null | undefined): string {
+	function formatPercentValue(value: number | null | undefined): string {
 		if (value === null || value === undefined) return '-';
 
-		return `${value.toLocaleString('th-TH', {
+		return value.toLocaleString('th-TH', {
 			minimumFractionDigits: 2,
 			maximumFractionDigits: 2
-		})}%`;
+		});
+	}
+
+	function formatPercent(value: number | null | undefined): string {
+		const formattedValue = formatPercentValue(value);
+		return formattedValue === '-' ? formattedValue : `${formattedValue}%`;
 	}
 
 	function getStatusClass(status: string): string {
@@ -514,103 +519,117 @@
 				</button>
 			</section>
 		{:else}
-			<section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
+			<section
+				class="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
+				aria-label="สรุปตัวชี้วัดสำคัญ"
+			>
 				<div
-					class="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+					class="flex min-h-[188px] min-w-0 flex-col rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
 				>
-					<div class="flex items-center justify-between">
-						<p class="text-sm font-black text-slate-500">ตัวชี้วัดที่มีข้อมูล</p>
+					<div class="flex min-h-11 items-start justify-between gap-3">
+						<p class="min-w-0 text-sm font-black leading-5 text-slate-500">ตัวชี้วัดที่มีข้อมูล</p>
 						<div
-							class="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-50 text-emerald-700"
+							class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-emerald-700"
 						>
 							<ClipboardList aria-hidden="true" size={22} strokeWidth={2.5} />
 						</div>
 					</div>
 
-					<p class="mt-3 text-5xl font-black text-emerald-700">
-						{totalIndicators}
-						<span class="text-2xl text-slate-400">/18</span>
-					</p>
-					<p class="mt-2 text-sm font-semibold text-slate-500">
+					<div class="mt-4 flex min-w-0 items-end gap-1.5 whitespace-nowrap [font-variant-numeric:tabular-nums]">
+						<span class="text-5xl font-black leading-none tracking-tight text-emerald-700">{totalIndicators}</span>
+						<span class="pb-1 text-2xl font-extrabold leading-none text-slate-400">/18</span>
+					</div>
+					<p class="mt-auto pt-3 text-sm font-semibold leading-5 text-slate-500">
 						{currentPeriodLabel} | ปีงบประมาณ {selectedYear}
 					</p>
 				</div>
 
 				<div
-					class="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+					class="flex min-h-[188px] min-w-0 flex-col rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
 				>
-					<div class="flex items-center justify-between">
-						<p class="text-sm font-black text-slate-500">ไม่มีข้อมูล</p>
-						<div class="grid h-11 w-11 place-items-center rounded-2xl bg-slate-100 text-slate-600">
+					<div class="flex min-h-11 items-start justify-between gap-3">
+						<p class="min-w-0 text-sm font-black leading-5 text-slate-500">ไม่มีข้อมูล</p>
+						<div class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-100 text-slate-600">
 							<AlertTriangle aria-hidden="true" size={22} strokeWidth={2.5} />
 						</div>
 					</div>
 
-					<p class="mt-3 text-5xl font-black text-slate-600">{noDataCount + waitingCount}</p>
-					<p class="mt-2 text-sm font-semibold text-slate-500">รายการที่ยังไม่พร้อมประเมิน</p>
+					<p class="mt-4 whitespace-nowrap text-5xl font-black leading-none tracking-tight text-slate-600 [font-variant-numeric:tabular-nums]">
+						{noDataCount + waitingCount}
+					</p>
+					<p class="mt-auto pt-3 text-sm font-semibold leading-5 text-slate-500">รายการที่ยังไม่พร้อมประเมิน</p>
 				</div>
 
 				<div
-					class="rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+					class="flex min-h-[188px] min-w-0 flex-col rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
 				>
-					<div class="flex items-center justify-between">
-						<p class="text-sm font-black text-slate-500">ผ่านเป้าหมายภาพรวม</p>
+					<div class="flex min-h-11 items-start justify-between gap-3">
+						<p class="min-w-0 text-sm font-black leading-5 text-slate-500">ผ่านเป้าหมายภาพรวม</p>
 						<div
-							class="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-50 text-emerald-700"
+							class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-emerald-700"
 						>
 							<CheckCircle2 aria-hidden="true" size={22} strokeWidth={2.5} />
 						</div>
 					</div>
 
-					<p class="mt-3 text-5xl font-black text-emerald-600">{passedCount}</p>
-					<p class="mt-2 text-sm font-semibold text-emerald-700">รวมทุกตัวชี้วัดที่มีข้อมูล</p>
+					<p class="mt-4 whitespace-nowrap text-5xl font-black leading-none tracking-tight text-emerald-600 [font-variant-numeric:tabular-nums]">{passedCount}</p>
+					<p class="mt-auto pt-3 text-sm font-semibold leading-5 text-emerald-700">รวมทุกตัวชี้วัดที่มีข้อมูล</p>
 				</div>
 
 				<div
-					class="rounded-[1.5rem] border border-rose-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+					class="flex min-h-[188px] min-w-0 flex-col rounded-[1.5rem] border border-rose-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
 				>
-					<div class="flex items-center justify-between">
-						<p class="text-sm font-black text-slate-500">ไม่ผ่านเป้าหมายภาพรวม</p>
-						<div class="grid h-11 w-11 place-items-center rounded-2xl bg-rose-50 text-rose-600">
+					<div class="flex min-h-11 items-start justify-between gap-3">
+						<p class="min-w-0 text-sm font-black leading-5 text-slate-500">ไม่ผ่านเป้าหมายภาพรวม</p>
+						<div class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-rose-50 text-rose-600">
 							<XCircle aria-hidden="true" size={22} strokeWidth={2.5} />
 						</div>
 					</div>
 
-					<p class="mt-3 text-5xl font-black text-rose-500">{failedCount}</p>
-					<p class="mt-2 text-sm font-semibold text-rose-600">รวมทุกตัวชี้วัดที่มีข้อมูล</p>
+					<p class="mt-4 whitespace-nowrap text-5xl font-black leading-none tracking-tight text-rose-500 [font-variant-numeric:tabular-nums]">{failedCount}</p>
+					<p class="mt-auto pt-3 text-sm font-semibold leading-5 text-rose-600">รวมทุกตัวชี้วัดที่มีข้อมูล</p>
 				</div>
 
 				<div
-					class="rounded-[1.5rem] border border-indigo-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+					class="flex min-h-[188px] min-w-0 flex-col rounded-[1.5rem] border border-sky-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
 				>
-					<div class="flex items-center justify-between">
-						<p class="text-sm font-black text-slate-500">อัตราผ่านภาพรวม</p>
-						<div class="grid h-11 w-11 place-items-center rounded-2xl bg-indigo-50 text-indigo-700">
+					<div class="flex min-h-11 items-start justify-between gap-3">
+						<p class="min-w-0 text-sm font-black leading-5 text-slate-500">อัตราผ่านภาพรวม</p>
+						<div class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-sky-50 text-sky-700">
 							<Target aria-hidden="true" size={22} strokeWidth={2.5} />
 						</div>
 					</div>
 
-					<p class="mt-3 text-5xl font-black text-indigo-600">{formatPercent(passRate)}</p>
-					<p class="mt-2 text-sm font-semibold text-slate-500">ผ่าน {passedCount} จาก {totalIndicators} ตัวชี้วัด</p>
+					<div class="mt-4 flex min-w-0 items-end gap-0.5 whitespace-nowrap text-sky-600 [font-variant-numeric:tabular-nums]">
+						<span class="text-4xl font-black leading-none tracking-tight 2xl:text-[2.75rem]">{formatPercentValue(passRate)}</span>
+						{#if passRate !== null && passRate !== undefined}
+							<span class="pb-0.5 text-xl font-black leading-none tracking-tight 2xl:text-2xl">%</span>
+						{/if}
+					</div>
+					<p class="mt-auto pt-3 text-sm font-semibold leading-5 text-slate-500">ผ่าน {passedCount} จาก {totalIndicators} ตัวชี้วัด</p>
 				</div>
 
 				<div
-					class="rounded-[1.5rem] border border-teal-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+					class="flex min-h-[188px] min-w-0 flex-col rounded-[1.5rem] border border-violet-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
 				>
-					<div class="flex items-center justify-between">
-						<p class="text-sm font-black text-slate-500">ผลงานเฉลี่ยภาพรวม</p>
-						<div class="grid h-11 w-11 place-items-center rounded-2xl bg-teal-50 text-teal-700">
+					<div class="flex min-h-11 items-start justify-between gap-3">
+						<p class="min-w-0 text-sm font-black leading-5 text-slate-500">ผลงานเฉลี่ยภาพรวม</p>
+						<div class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-700">
 							<Activity aria-hidden="true" size={22} strokeWidth={2.5} />
 						</div>
 					</div>
 
-					<p class="mt-3 text-5xl font-black text-teal-600">{formatPercent(averagePercent)}</p>
-					<p class="mt-2 text-sm font-semibold text-slate-500">
+					<div class="mt-4 flex min-w-0 items-end gap-0.5 whitespace-nowrap text-violet-600 [font-variant-numeric:tabular-nums]">
+						<span class="text-4xl font-black leading-none tracking-tight 2xl:text-[2.75rem]">{formatPercentValue(averagePercent)}</span>
+						{#if averagePercent !== null && averagePercent !== undefined}
+							<span class="pb-0.5 text-xl font-black leading-none tracking-tight 2xl:text-2xl">%</span>
+						{/if}
+					</div>
+					<p class="mt-auto pt-3 text-sm font-semibold leading-5 text-slate-500">
 						ค่าเฉลี่ยร้อยละของตัวชี้วัดที่มีข้อมูล
 					</p>
 				</div>
 			</section>
-
 			<section class="grid grid-cols-1 gap-5 xl:grid-cols-[0.72fr_1.28fr]">
 				<div class="rounded-[1.75rem] border border-emerald-100 bg-white p-5 shadow-sm">
 					<div class="flex items-center justify-between gap-3">
