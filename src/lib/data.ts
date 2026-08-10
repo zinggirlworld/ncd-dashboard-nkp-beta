@@ -40,7 +40,11 @@ const REQUIRED_COLUMNS = [
 ] as const;
 
 function toNumber(value: unknown): number {
-	const numberValue = Number(String(value ?? '').replace(/,/g, '').trim());
+	const numberValue = Number(
+		String(value ?? '')
+			.replace(/,/g, '')
+			.trim()
+	);
 	return Number.isFinite(numberValue) ? numberValue : 0;
 }
 

@@ -199,41 +199,43 @@
 	}
 
 	$effect(() => {
-		if (!chartEl || !hasData) {
-			if (chart) {
-				chart.dispose();
-				chart = null;
-			}
-			return;
-		}
+		if (!chartEl) return;
 
-		if (!chart) {
-			chart = echarts.init(chartEl);
-		}
+		const instance = echarts.init(chartEl);
+		chart = instance;
 
-		chart.setOption(buildOptions(), true);
-
-		const handleResize = () => chart?.resize();
+		const handleResize = () => instance.resize();
 		window.addEventListener('resize', handleResize);
 
 		return () => {
 			window.removeEventListener('resize', handleResize);
-			if (chart) {
-				chart.dispose();
-				chart = null;
-			}
+			instance.dispose();
+			if (chart === instance) chart = null;
 		};
+	});
+
+	$effect(() => {
+		if (!chart || !hasData) return;
+
+		chart.setOption(buildOptions(), true);
 	});
 </script>
 
 {#if hasData}
-	<div role="img" aria-label="กราฟสัดส่วนตัวชี้วัดที่ผ่านและไม่ผ่านเป้าหมาย" class="h-[280px] w-full sm:h-[300px]" bind:this={chartEl}></div>
+	<div
+		role="img"
+		aria-label="กราฟสัดส่วนตัวชี้วัดที่ผ่านและไม่ผ่านเป้าหมาย"
+		class="h-[280px] w-full sm:h-[300px]"
+		bind:this={chartEl}
+	></div>
 {:else}
 	<div
 		class="grid h-[260px] w-full place-items-center rounded-3xl border border-dashed border-emerald-200 bg-emerald-50/50"
 	>
 		<div class="text-center">
-			<p role="status" class="text-base font-black text-emerald-700">ไม่มีข้อมูลสถานะสำหรับแสดงกราฟ</p>
+			<p role="status" class="text-base font-black text-emerald-700">
+				ไม่มีข้อมูลสถานะสำหรับแสดงกราฟ
+			</p>
 			<p class="mt-1 text-sm font-semibold text-slate-500">
 				กรุณาเลือกปีงบประมาณ ช่วงเวลา หรืองวดข้อมูลใหม่
 			</p>

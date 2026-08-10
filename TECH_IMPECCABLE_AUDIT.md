@@ -17,24 +17,24 @@ Final requirement รองรับเฉพาะ **ปีงบประม�
 
 ## Audit scores
 
-| หมวด | คะแนน |
-|---|---:|
-| Requirement Alignment | 10.0 |
-| Technical Architecture | 9.6 |
-| Svelte Lifecycle | 9.7 |
-| Data Contract | 9.8 |
-| Code Quality | 9.6 |
-| UX Flow | 9.7 |
-| Visual Hierarchy | 9.7 |
-| Color Consistency | 9.6 |
-| Data Readability | 9.8 |
-| Executive Presentation | 9.7 |
-| Accessibility | 9.5 |
-| Responsive Design | 9.6 |
-| Healthcare Appropriateness | 9.8 |
-| Maintainability | 9.6 |
-| Deployment Readiness | 9.6 |
-| **Overall** | **9.68/10** |
+| หมวด                       |       คะแนน |
+| -------------------------- | ----------: |
+| Requirement Alignment      |        10.0 |
+| Technical Architecture     |         9.6 |
+| Svelte Lifecycle           |         9.7 |
+| Data Contract              |         9.8 |
+| Code Quality               |         9.6 |
+| UX Flow                    |         9.7 |
+| Visual Hierarchy           |         9.7 |
+| Color Consistency          |         9.6 |
+| Data Readability           |         9.8 |
+| Executive Presentation     |         9.7 |
+| Accessibility              |         9.5 |
+| Responsive Design          |         9.6 |
+| Healthcare Appropriateness |         9.8 |
+| Maintainability            |         9.6 |
+| Deployment Readiness       |         9.6 |
+| **Overall**                | **9.68/10** |
 
 ## Verification status
 

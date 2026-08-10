@@ -194,39 +194,39 @@
 	}
 
 	$effect(() => {
-		if (!chartEl || !hasData) {
-			if (chart) {
-				chart.dispose();
-				chart = null;
-			}
-			return;
-		}
+		if (!chartEl) return;
 
-		if (!chart) {
-			chart = echarts.init(chartEl);
-		}
+		const instance = echarts.init(chartEl);
+		chart = instance;
 
-		chart.setOption(buildOptions(), true);
-
-		const handleResize = () => chart?.resize();
+		const handleResize = () => instance.resize();
 		window.addEventListener('resize', handleResize);
 
 		return () => {
 			window.removeEventListener('resize', handleResize);
-			if (chart) {
-				chart.dispose();
-				chart = null;
-			}
+			instance.dispose();
+			if (chart === instance) chart = null;
 		};
+	});
+
+	$effect(() => {
+		if (!chart || !hasData) return;
+
+		chart.setOption(buildOptions(), true);
 	});
 </script>
 
 {#if hasData}
 	<div class="grid grid-cols-1 gap-5 xl:grid-cols-[0.9fr_1.1fr]">
-		<div role="img" aria-label="กราฟสัดส่วนผู้ป่วยตามระดับความเสี่ยงเท้า" class="h-[300px] w-full sm:h-[320px]" bind:this={chartEl}></div>
+		<div
+			role="img"
+			aria-label="กราฟสัดส่วนผู้ป่วยตามระดับความเสี่ยงเท้า"
+			class="h-[300px] w-full sm:h-[320px]"
+			bind:this={chartEl}
+		></div>
 
 		<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-			{#each chartRows as row}
+			{#each chartRows as row (row.risk_code)}
 				<div class="rounded-3xl border border-slate-100 bg-slate-50 p-4">
 					<div class="flex items-start justify-between gap-3">
 						<div>

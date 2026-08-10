@@ -1,7 +1,7 @@
 SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 
 ------------------------------------------------------------
--- NCD Dashboard Export Query: ปีงบประมาณ + ไตรมาส
+-- NCD Dashboard Export Query: ไตรมาสเท่านั้น
 -- Output columns match: static/ncd_indicator_summary.csv
 -- Scope : Clinic 0105, Fiscal year 2566-2569, Indicators 1-18
 -- Note  : Uses COLLATE DATABASE_DEFAULT to avoid collation conflict
@@ -40,7 +40,7 @@ IF OBJECT_ID('tempdb..#foot_ulcer_patient') IS NOT NULL DROP TABLE #foot_ulcer_p
 IF OBJECT_ID('tempdb..#raw_indicator') IS NOT NULL DROP TABLE #raw_indicator;
 
 ------------------------------------------------------------
--- 1) Period table: ปีงบประมาณ + ไตรมาส
+-- 1) Period table: ไตรมาสเท่านั้น
 ------------------------------------------------------------
 CREATE TABLE #periods (
     period_type nvarchar(20) COLLATE DATABASE_DEFAULT NOT NULL,
@@ -50,13 +50,6 @@ CREATE TABLE #periods (
     date_start date NOT NULL,
     date_end date NOT NULL
 );
-
--- ปีงบประมาณ
-INSERT INTO #periods VALUES
-(N'ปีงบประมาณ', 2566, 0, N'ปีงบประมาณ 2566', '2022-10-01', '2023-10-01'),
-(N'ปีงบประมาณ', 2567, 0, N'ปีงบประมาณ 2567', '2023-10-01', '2024-10-01'),
-(N'ปีงบประมาณ', 2568, 0, N'ปีงบประมาณ 2568', '2024-10-01', '2025-10-01'),
-(N'ปีงบประมาณ', 2569, 0, N'ปีงบประมาณ 2569', '2025-10-01', '2026-10-01');
 
 -- ไตรมาส
 INSERT INTO #periods VALUES
@@ -78,13 +71,6 @@ INSERT INTO #periods VALUES
 (N'ไตรมาส', 2569, 4, N'ไตรมาส 4', '2026-07-01', '2026-10-01');
 
 CREATE INDEX IX_periods ON #periods (period_type, fiscal_year_be, period_order, date_start, date_end);
-
-------------------------------------------------------------
--- FILTER: Export only quarter periods
-------------------------------------------------------------
-DELETE FROM #periods
-WHERE period_type <> N'ไตรมาส';
-
 
 ------------------------------------------------------------
 -- 2) Clinic 0105 base by period

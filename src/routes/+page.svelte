@@ -58,7 +58,7 @@
 		[...new Set(rows.map((r) => r.fiscal_year_be))].filter((year) => year > 0).sort((a, b) => b - a)
 	);
 
-	let periodTypes = $derived(['ปีงบประมาณ', 'ไตรมาส']);
+	const periodTypes = ['ปีงบประมาณ', 'ไตรมาส'];
 
 	let filteredRows = $derived(
 		rows
@@ -95,7 +95,6 @@
 				{ order: 4, label: 'ไตรมาส 4' }
 			];
 		}
-
 
 		return [{ order: 0, label: `ปีงบประมาณ ${selectedYear}` }];
 	});
@@ -137,9 +136,7 @@
 			.filter((row) => row.fiscal_year_be === selectedYear)
 			.filter((row) => row.period_type === selectedPeriodType)
 			.filter((row) =>
-				selectedPeriodType === 'ไตรมาส'
-					? row.period_order === activePeriodOrder
-					: true
+				selectedPeriodType === 'ไตรมาส' ? row.period_order === activePeriodOrder : true
 			)
 			.sort((a, b) => a.risk_order - b.risk_order)
 	);
@@ -161,9 +158,6 @@
 	let totalIndicators = $derived(currentRows.length);
 	let passedCount = $derived(currentRows.filter((r) => r.status === 'ผ่าน').length);
 	let failedCount = $derived(currentRows.filter((r) => r.status === 'ไม่ผ่าน').length);
-	let noDataCount = $derived(
-		currentRows.filter((r) => r.status !== 'ผ่าน' && r.status !== 'ไม่ผ่าน').length
-	);
 
 	let screeningPassedCount = $derived(screeningRows.filter((r) => r.status === 'ผ่าน').length);
 	let screeningFailedCount = $derived(screeningRows.filter((r) => r.status === 'ไม่ผ่าน').length);
@@ -185,13 +179,19 @@
 	let oralScreeningPercent = $derived(oralScreeningRow?.actual_percent ?? 0);
 	let footScreeningPercent = $derived(footScreeningRow?.actual_percent ?? 0);
 
-	let averagePercent = $derived(
-		currentRows.length > 0
-			? currentRows.reduce((sum, r) => sum + (r.actual_percent ?? 0), 0) / currentRows.length
-			: 0
-	);
+	let evaluatedCount = $derived(passedCount + failedCount);
+	let unavailableCount = $derived(Math.max(indicatorMaster.length - evaluatedCount, 0));
 
-	let passRate = $derived(totalIndicators > 0 ? (passedCount * 100) / totalIndicators : 0);
+	let averagePercent = $derived.by(() => {
+		const evaluableRows = currentRows.filter((row) => row.actual_percent !== null);
+
+		return evaluableRows.length > 0
+			? evaluableRows.reduce((sum, row) => sum + (row.actual_percent ?? 0), 0) /
+					evaluableRows.length
+			: 0;
+	});
+
+	let passRate = $derived(evaluatedCount > 0 ? (passedCount * 100) / evaluatedCount : 0);
 
 	let currentPeriodLabel = $derived(
 		currentRows[0]?.period_label ??
@@ -336,7 +336,7 @@
 		}
 
 		if (category === 'ไต') {
-			return 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100';
+			return 'bg-sky-50 text-sky-700 ring-1 ring-sky-100';
 		}
 
 		if (category === 'ตา / ฟัน / เท้า') {
@@ -429,12 +429,14 @@
 					</h1>
 
 					<p class="mt-2 text-sm font-semibold text-emerald-800 md:text-base">
-						คลินิกเบาหวาน โรงพยาบาลนครพิงค์ | ระบบติดตามตัวชี้วัด NCD, การคัดกรองภาวะแทรกซ้อน และความเสี่ยงเท้า
+						คลินิกเบาหวาน โรงพยาบาลนครพิงค์ | ระบบติดตามตัวชี้วัด NCD, การคัดกรองภาวะแทรกซ้อน
+						และความเสี่ยงเท้า
 					</p>
-
 				</div>
 
-				<div class={`grid w-full gap-3 xl:max-w-2xl ${selectedPeriodType === 'ไตรมาส' ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
+				<div
+					class={`grid w-full gap-3 xl:max-w-2xl ${selectedPeriodType === 'ไตรมาส' ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}
+				>
 					<label for="fiscal-year" class="text-sm font-black text-emerald-900">
 						ปีงบประมาณ
 						<select
@@ -445,7 +447,7 @@
 								selectedPeriodOrder = null;
 							}}
 						>
-							{#each years as year}
+							{#each years as year (year)}
 								<option value={year}>{year}</option>
 							{/each}
 						</select>
@@ -461,7 +463,7 @@
 								selectedPeriodOrder = null;
 							}}
 						>
-							{#each periodTypes as periodType}
+							{#each periodTypes as periodType (periodType)}
 								<option value={periodType}>{periodType}</option>
 							{/each}
 						</select>
@@ -476,7 +478,7 @@
 								value={activePeriodOrder}
 								onchange={handlePeriodOrderChange}
 							>
-								{#each availablePeriods as period}
+								{#each availablePeriods as period (period.order)}
 									<option value={period.order}>{period.label}</option>
 								{/each}
 							</select>
@@ -487,7 +489,10 @@
 		</header>
 
 		{#if loading}
-			<section aria-live="polite" class="rounded-3xl border border-emerald-100 bg-white p-6 shadow-sm">
+			<section
+				aria-live="polite"
+				class="rounded-3xl border border-emerald-100 bg-white p-6 shadow-sm"
+			>
 				<p class="font-bold text-emerald-700">กำลังโหลดข้อมูล...</p>
 			</section>
 		{:else if errorMessage}
@@ -504,7 +509,8 @@
 				</p>
 
 				<p class="mt-2 text-sm font-semibold text-amber-700">
-					ยังไม่พบข้อมูลในงวดที่เลือก กรุณาตรวจสอบว่าไฟล์ ncd_indicator_summary.csv มีข้อมูล period_type และ period_order ตรงกับตัวเลือกปัจจุบัน
+					ยังไม่พบข้อมูลในงวดที่เลือก กรุณาตรวจสอบว่าไฟล์ ncd_indicator_summary.csv มีข้อมูล
+					period_type และ period_order ตรงกับตัวเลือกปัจจุบัน
 				</p>
 
 				<button
@@ -527,7 +533,7 @@
 					class="flex min-h-[188px] min-w-0 flex-col rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
 				>
 					<div class="flex min-h-11 items-start justify-between gap-3">
-						<p class="min-w-0 text-sm font-black leading-5 text-slate-500">ตัวชี้วัดที่มีข้อมูล</p>
+						<p class="min-w-0 text-sm leading-5 font-black text-slate-500">ตัวชี้วัดที่มีข้อมูล</p>
 						<div
 							class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-emerald-700"
 						>
@@ -535,11 +541,15 @@
 						</div>
 					</div>
 
-					<div class="mt-4 flex min-w-0 items-end gap-1.5 whitespace-nowrap [font-variant-numeric:tabular-nums]">
-						<span class="text-5xl font-black leading-none tracking-tight text-emerald-700">{totalIndicators}</span>
-						<span class="pb-1 text-2xl font-extrabold leading-none text-slate-400">/18</span>
+					<div
+						class="mt-4 flex min-w-0 items-end gap-1.5 whitespace-nowrap [font-variant-numeric:tabular-nums]"
+					>
+						<span class="text-5xl leading-none font-black tracking-tight text-emerald-700"
+							>{totalIndicators}</span
+						>
+						<span class="pb-1 text-2xl leading-none font-extrabold text-slate-400">/18</span>
 					</div>
-					<p class="mt-auto pt-3 text-sm font-semibold leading-5 text-slate-500">
+					<p class="mt-auto pt-3 text-sm leading-5 font-semibold text-slate-500">
 						{currentPeriodLabel} | ปีงบประมาณ {selectedYear}
 					</p>
 				</div>
@@ -548,23 +558,29 @@
 					class="flex min-h-[188px] min-w-0 flex-col rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
 				>
 					<div class="flex min-h-11 items-start justify-between gap-3">
-						<p class="min-w-0 text-sm font-black leading-5 text-slate-500">ไม่มีข้อมูล</p>
-						<div class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-100 text-slate-600">
+						<p class="min-w-0 text-sm leading-5 font-black text-slate-500">ไม่มีข้อมูล</p>
+						<div
+							class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-100 text-slate-600"
+						>
 							<AlertTriangle aria-hidden="true" size={22} strokeWidth={2.5} />
 						</div>
 					</div>
 
-					<p class="mt-4 whitespace-nowrap text-5xl font-black leading-none tracking-tight text-slate-600 [font-variant-numeric:tabular-nums]">
-						{noDataCount + waitingCount}
+					<p
+						class="mt-4 text-5xl leading-none font-black tracking-tight whitespace-nowrap text-slate-600 [font-variant-numeric:tabular-nums]"
+					>
+						{unavailableCount}
 					</p>
-					<p class="mt-auto pt-3 text-sm font-semibold leading-5 text-slate-500">รายการที่ยังไม่พร้อมประเมิน</p>
+					<p class="mt-auto pt-3 text-sm leading-5 font-semibold text-slate-500">
+						รายการที่ยังไม่พร้อมประเมิน
+					</p>
 				</div>
 
 				<div
 					class="flex min-h-[188px] min-w-0 flex-col rounded-[1.5rem] border border-emerald-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
 				>
 					<div class="flex min-h-11 items-start justify-between gap-3">
-						<p class="min-w-0 text-sm font-black leading-5 text-slate-500">ผ่านเป้าหมายภาพรวม</p>
+						<p class="min-w-0 text-sm leading-5 font-black text-slate-500">ผ่านเป้าหมายภาพรวม</p>
 						<div
 							class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-emerald-700"
 						>
@@ -572,61 +588,95 @@
 						</div>
 					</div>
 
-					<p class="mt-4 whitespace-nowrap text-5xl font-black leading-none tracking-tight text-emerald-600 [font-variant-numeric:tabular-nums]">{passedCount}</p>
-					<p class="mt-auto pt-3 text-sm font-semibold leading-5 text-emerald-700">รวมทุกตัวชี้วัดที่มีข้อมูล</p>
+					<p
+						class="mt-4 text-5xl leading-none font-black tracking-tight whitespace-nowrap text-emerald-600 [font-variant-numeric:tabular-nums]"
+					>
+						{passedCount}
+					</p>
+					<p class="mt-auto pt-3 text-sm leading-5 font-semibold text-emerald-700">
+						รวมทุกตัวชี้วัดที่มีข้อมูล
+					</p>
 				</div>
 
 				<div
 					class="flex min-h-[188px] min-w-0 flex-col rounded-[1.5rem] border border-rose-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
 				>
 					<div class="flex min-h-11 items-start justify-between gap-3">
-						<p class="min-w-0 text-sm font-black leading-5 text-slate-500">ไม่ผ่านเป้าหมายภาพรวม</p>
-						<div class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-rose-50 text-rose-600">
+						<p class="min-w-0 text-sm leading-5 font-black text-slate-500">ไม่ผ่านเป้าหมายภาพรวม</p>
+						<div
+							class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-rose-50 text-rose-600"
+						>
 							<XCircle aria-hidden="true" size={22} strokeWidth={2.5} />
 						</div>
 					</div>
 
-					<p class="mt-4 whitespace-nowrap text-5xl font-black leading-none tracking-tight text-rose-500 [font-variant-numeric:tabular-nums]">{failedCount}</p>
-					<p class="mt-auto pt-3 text-sm font-semibold leading-5 text-rose-600">รวมทุกตัวชี้วัดที่มีข้อมูล</p>
+					<p
+						class="mt-4 text-5xl leading-none font-black tracking-tight whitespace-nowrap text-rose-500 [font-variant-numeric:tabular-nums]"
+					>
+						{failedCount}
+					</p>
+					<p class="mt-auto pt-3 text-sm leading-5 font-semibold text-rose-600">
+						รวมทุกตัวชี้วัดที่มีข้อมูล
+					</p>
 				</div>
 
 				<div
 					class="flex min-h-[188px] min-w-0 flex-col rounded-[1.5rem] border border-sky-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
 				>
 					<div class="flex min-h-11 items-start justify-between gap-3">
-						<p class="min-w-0 text-sm font-black leading-5 text-slate-500">อัตราผ่านภาพรวม</p>
-						<div class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-sky-50 text-sky-700">
+						<p class="min-w-0 text-sm leading-5 font-black text-slate-500">อัตราผ่านภาพรวม</p>
+						<div
+							class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-sky-50 text-sky-700"
+						>
 							<Target aria-hidden="true" size={22} strokeWidth={2.5} />
 						</div>
 					</div>
 
-					<div class="mt-4 flex min-w-0 items-end gap-0.5 whitespace-nowrap text-sky-600 [font-variant-numeric:tabular-nums]">
-						<span class="text-4xl font-black leading-none tracking-tight 2xl:text-[2.75rem]">{formatPercentValue(passRate)}</span>
+					<div
+						class="mt-4 flex min-w-0 items-end gap-0.5 whitespace-nowrap text-sky-600 [font-variant-numeric:tabular-nums]"
+					>
+						<span class="text-4xl leading-none font-black tracking-tight 2xl:text-[2.75rem]"
+							>{formatPercentValue(passRate)}</span
+						>
 						{#if passRate !== null && passRate !== undefined}
-							<span class="pb-0.5 text-xl font-black leading-none tracking-tight 2xl:text-2xl">%</span>
+							<span class="pb-0.5 text-xl leading-none font-black tracking-tight 2xl:text-2xl"
+								>%</span
+							>
 						{/if}
 					</div>
-					<p class="mt-auto pt-3 text-sm font-semibold leading-5 text-slate-500">ผ่าน {passedCount} จาก {totalIndicators} ตัวชี้วัด</p>
+					<p class="mt-auto pt-3 text-sm leading-5 font-semibold text-slate-500">
+						ผ่าน {passedCount} จาก {evaluatedCount} ตัวชี้วัดที่ประเมินได้
+					</p>
 				</div>
 
 				<div
 					class="flex min-h-[188px] min-w-0 flex-col rounded-[1.5rem] border border-violet-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
 				>
 					<div class="flex min-h-11 items-start justify-between gap-3">
-						<p class="min-w-0 text-sm font-black leading-5 text-slate-500">ผลงานเฉลี่ยภาพรวม</p>
-						<div class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-700">
+						<p class="min-w-0 text-sm leading-5 font-black text-slate-500">
+							ค่าเฉลี่ยผลลัพธ์ที่ประเมินได้
+						</p>
+						<div
+							class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-700"
+						>
 							<Activity aria-hidden="true" size={22} strokeWidth={2.5} />
 						</div>
 					</div>
 
-					<div class="mt-4 flex min-w-0 items-end gap-0.5 whitespace-nowrap text-violet-600 [font-variant-numeric:tabular-nums]">
-						<span class="text-4xl font-black leading-none tracking-tight 2xl:text-[2.75rem]">{formatPercentValue(averagePercent)}</span>
+					<div
+						class="mt-4 flex min-w-0 items-end gap-0.5 whitespace-nowrap text-violet-600 [font-variant-numeric:tabular-nums]"
+					>
+						<span class="text-4xl leading-none font-black tracking-tight 2xl:text-[2.75rem]"
+							>{formatPercentValue(averagePercent)}</span
+						>
 						{#if averagePercent !== null && averagePercent !== undefined}
-							<span class="pb-0.5 text-xl font-black leading-none tracking-tight 2xl:text-2xl">%</span>
+							<span class="pb-0.5 text-xl leading-none font-black tracking-tight 2xl:text-2xl"
+								>%</span
+							>
 						{/if}
 					</div>
-					<p class="mt-auto pt-3 text-sm font-semibold leading-5 text-slate-500">
-						ค่าเฉลี่ยร้อยละของตัวชี้วัดที่มีข้อมูล
+					<p class="mt-auto pt-3 text-sm leading-5 font-semibold text-slate-500">
+						คำนวณจากตัวชี้วัดที่มีค่าร้อยละจริง
 					</p>
 				</div>
 			</section>
@@ -634,10 +684,12 @@
 				<div class="rounded-[1.75rem] border border-emerald-100 bg-white p-5 shadow-sm">
 					<div class="flex items-center justify-between gap-3">
 						<div>
-							<p class="text-sm font-black text-emerald-700">Executive Status</p>
+							<p class="text-sm font-black text-emerald-700">สถานะภาพรวม</p>
 							<h2 class="mt-1 text-2xl font-black text-[#063F33]">ภาพรวมสถานะตัวชี้วัด</h2>
 						</div>
-						<span class="rounded-full bg-emerald-50 px-4 py-2 text-xs font-black text-emerald-700 ring-1 ring-emerald-100">
+						<span
+							class="rounded-full bg-emerald-50 px-4 py-2 text-xs font-black text-emerald-700 ring-1 ring-emerald-100"
+						>
 							{currentPeriodLabel}
 						</span>
 					</div>
@@ -651,14 +703,18 @@
 					<div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
 						<div>
 							<p class="text-sm font-black text-emerald-700">ข้อสรุปสำหรับการนำเสนอผู้ตรวจ</p>
-							<h2 class="mt-1 text-2xl font-black text-[#063F33]">Executive Brief</h2>
+							<h2 class="mt-1 text-2xl font-black text-[#063F33]">สรุปสำหรับผู้บริหาร</h2>
 						</div>
-						<span class="rounded-full bg-slate-50 px-4 py-2 text-xs font-black text-slate-600 ring-1 ring-slate-100">
+						<span
+							class="rounded-full bg-slate-50 px-4 py-2 text-xs font-black text-slate-600 ring-1 ring-slate-100"
+						>
 							ปีงบประมาณ {selectedYear}
 						</span>
 					</div>
 
-					<div class="mt-5 rounded-3xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-white p-5">
+					<div
+						class="mt-5 rounded-3xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-white p-5"
+					>
 						<p class="text-base leading-7 font-bold text-slate-700">{executiveInsight}</p>
 					</div>
 
@@ -673,7 +729,9 @@
 						</div>
 						<div class="rounded-2xl bg-amber-50 p-4 ring-1 ring-amber-100">
 							<p class="text-xs font-black text-amber-700">เท้าเสี่ยงสูงขึ้นไป</p>
-							<p class="mt-1 text-3xl font-black text-amber-700">{formatPercent(footHighRiskPercent)}</p>
+							<p class="mt-1 text-3xl font-black text-amber-700">
+								{formatPercent(footHighRiskPercent)}
+							</p>
 						</div>
 					</div>
 				</div>
@@ -821,7 +879,7 @@
 
 				{#if urgentRows.length > 0}
 					<div class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
-						{#each urgentRows as row, index}
+						{#each urgentRows as row, index (row.indicator_no)}
 							<div class="rounded-3xl border border-rose-100 bg-white p-5 shadow-sm">
 								<div class="flex items-start justify-between gap-3">
 									<div>
@@ -832,7 +890,7 @@
 									</div>
 
 									<span
-										class="inline-flex min-w-[72px] items-center justify-center rounded-full bg-rose-100 px-3 py-1 text-xs font-black leading-none whitespace-nowrap text-rose-700"
+										class="inline-flex min-w-[72px] items-center justify-center rounded-full bg-rose-100 px-3 py-1 text-xs leading-none font-black whitespace-nowrap text-rose-700"
 									>
 										{row.status}
 									</span>
@@ -872,12 +930,13 @@
 				{/if}
 			</section>
 
-
 			<section class="grid grid-cols-1 gap-5 xl:grid-cols-[1.45fr_0.85fr]">
 				<div class="rounded-[1.75rem] border border-emerald-100 bg-white p-5 shadow-sm">
 					<div class="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
 						<div class="flex items-center gap-3">
-							<div class="grid h-11 w-11 place-items-center rounded-2xl bg-teal-50 text-teal-700">
+							<div
+								class="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-50 text-emerald-700"
+							>
 								<Target aria-hidden="true" size={23} strokeWidth={2.5} />
 							</div>
 
@@ -912,7 +971,7 @@
 					</div>
 
 					<div class="mt-5 space-y-4">
-						{#each screeningStatusRows as row}
+						{#each screeningStatusRows as row (row.indicator_no)}
 							<div class="rounded-3xl border border-slate-100 bg-slate-50/70 p-4">
 								<div class="flex items-start justify-between gap-3">
 									<div>
@@ -925,7 +984,7 @@
 									</div>
 
 									<span
-										class={`inline-flex min-w-[72px] items-center justify-center rounded-full px-3 py-1 text-xs font-black leading-none whitespace-nowrap ${getStatusClass(row.status)}`}
+										class={`inline-flex min-w-[72px] items-center justify-center rounded-full px-3 py-1 text-xs leading-none font-black whitespace-nowrap ${getStatusClass(row.status)}`}
 									>
 										{row.status}
 									</span>
@@ -1018,29 +1077,43 @@
 						<div class="rounded-3xl border border-amber-100 bg-amber-50/60 p-5">
 							<p class="text-sm font-black text-amber-800">คำอธิบายระดับความเสี่ยงเท้า</p>
 							<div class="mt-4 space-y-3">
-								<div class="flex items-center justify-between rounded-2xl bg-white px-4 py-3 ring-1 ring-emerald-100">
+								<div
+									class="flex items-center justify-between rounded-2xl bg-white px-4 py-3 ring-1 ring-emerald-100"
+								>
 									<span class="font-black text-emerald-700">Z0280 เสี่ยงต่ำ</span>
 									<span class="font-bold text-slate-600">ติดตามตามนัด</span>
 								</div>
-								<div class="flex items-center justify-between rounded-2xl bg-white px-4 py-3 ring-1 ring-amber-100">
+								<div
+									class="flex items-center justify-between rounded-2xl bg-white px-4 py-3 ring-1 ring-amber-100"
+								>
 									<span class="font-black text-amber-700">Z0281 เสี่ยงปานกลาง</span>
 									<span class="font-bold text-slate-600">เน้นให้ความรู้</span>
 								</div>
-								<div class="flex items-center justify-between rounded-2xl bg-white px-4 py-3 ring-1 ring-orange-100">
+								<div
+									class="flex items-center justify-between rounded-2xl bg-white px-4 py-3 ring-1 ring-orange-100"
+								>
 									<span class="font-black text-orange-700">Z0282 เสี่ยงสูง</span>
 									<span class="font-bold text-slate-600">ติดตามใกล้ชิด</span>
 								</div>
-								<div class="flex items-center justify-between rounded-2xl bg-white px-4 py-3 ring-1 ring-rose-100">
+								<div
+									class="flex items-center justify-between rounded-2xl bg-white px-4 py-3 ring-1 ring-rose-100"
+								>
 									<span class="font-black text-rose-700">Z0283 เสี่ยงสูงมาก</span>
 									<span class="font-bold text-slate-600">เร่งดูแลเชิงรุก</span>
 								</div>
 							</div>
 
 							<div class="mt-5 rounded-2xl bg-white p-4 ring-1 ring-amber-100">
-								<p class="text-xs font-black text-slate-500">จำนวนผู้ป่วยที่ประเมินความเสี่ยงเท้า</p>
-								<p class="mt-1 text-3xl font-black text-amber-700">{formatNumber(footRiskTotal)} HN</p>
+								<p class="text-xs font-black text-slate-500">
+									จำนวนผู้ป่วยที่ประเมินความเสี่ยงเท้า
+								</p>
+								<p class="mt-1 text-3xl font-black text-amber-700">
+									{formatNumber(footRiskTotal)} HN
+								</p>
 								<p class="mt-2 text-sm font-semibold text-slate-500">
-									เสี่ยงสูงขึ้นไป {formatNumber(footHighRiskTotal)} HN ({formatPercent(footHighRiskPercent)})
+									เสี่ยงสูงขึ้นไป {formatNumber(footHighRiskTotal)} HN ({formatPercent(
+										footHighRiskPercent
+									)})
 								</p>
 							</div>
 						</div>
@@ -1104,9 +1177,14 @@
 				</div>
 
 				{#if showDetailTable}
-					<div id="indicator-detail-table" class="mt-5 max-h-[70vh] overflow-auto rounded-2xl border border-slate-100">
+					<div
+						id="indicator-detail-table"
+						class="mt-5 max-h-[70vh] overflow-auto rounded-2xl border border-slate-100"
+					>
 						<table class="w-full border-separate border-spacing-0 text-left text-sm">
-							<caption class="sr-only">รายละเอียดตัวชี้วัด NCD จำนวน 18 ข้อ พร้อมเป้าหมาย ผลงาน และสถานะ</caption>
+							<caption class="sr-only"
+								>รายละเอียดตัวชี้วัด NCD จำนวน 18 ข้อ พร้อมเป้าหมาย ผลงาน และสถานะ</caption
+							>
 							<thead class="sticky top-0 z-10">
 								<tr class="border-b bg-emerald-50 text-emerald-900 shadow-sm">
 									<th class="px-4 py-3 whitespace-nowrap">ลำดับ</th>
@@ -1122,10 +1200,12 @@
 							</thead>
 
 							<tbody>
-								{#each detailRows as row}
+								{#each detailRows as row (row.indicator_no)}
 									<tr
 										class={`border-b ${
-											row.hasData ? 'bg-white hover:bg-emerald-50/60 even:bg-slate-50/40' : 'bg-slate-50/70 text-slate-400'
+											row.hasData
+												? 'bg-white even:bg-slate-50/40 hover:bg-emerald-50/60'
+												: 'bg-slate-50/70 text-slate-400'
 										}`}
 									>
 										<td
@@ -1180,7 +1260,7 @@
 
 										<td class="px-4 py-3 text-center whitespace-nowrap">
 											<span
-												class={`inline-flex min-w-[72px] items-center justify-center rounded-full px-3 py-1 text-xs font-black leading-none whitespace-nowrap ${getStatusClass(
+												class={`inline-flex min-w-[72px] items-center justify-center rounded-full px-3 py-1 text-xs leading-none font-black whitespace-nowrap ${getStatusClass(
 													row.displayStatus
 												)}`}
 											>

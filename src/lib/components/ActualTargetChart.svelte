@@ -150,35 +150,35 @@
 	}
 
 	$effect(() => {
-		if (!chartEl || !hasData) {
-			if (chart) {
-				chart.dispose();
-				chart = null;
-			}
-			return;
-		}
+		if (!chartEl) return;
 
-		if (!chart) {
-			chart = echarts.init(chartEl);
-		}
+		const instance = echarts.init(chartEl);
+		chart = instance;
 
-		chart.setOption(buildOptions(), true);
-
-		const handleResize = () => chart?.resize();
+		const handleResize = () => instance.resize();
 		window.addEventListener('resize', handleResize);
 
 		return () => {
 			window.removeEventListener('resize', handleResize);
-			if (chart) {
-				chart.dispose();
-				chart = null;
-			}
+			instance.dispose();
+			if (chart === instance) chart = null;
 		};
+	});
+
+	$effect(() => {
+		if (!chart || !hasData) return;
+
+		chart.setOption(buildOptions(), true);
 	});
 </script>
 
 {#if hasData}
-	<div role="img" aria-label="กราฟเปรียบเทียบผลงานจริงกับเป้าหมายของการตรวจตา ช่องปาก และเท้า" class="h-[320px] w-full sm:h-[360px]" bind:this={chartEl}></div>
+	<div
+		role="img"
+		aria-label="กราฟเปรียบเทียบผลงานจริงกับเป้าหมายของการตรวจตา ช่องปาก และเท้า"
+		class="h-[320px] w-full sm:h-[360px]"
+		bind:this={chartEl}
+	></div>
 {:else}
 	<div class="grid h-[280px] place-items-center rounded-3xl border border-dashed border-slate-200">
 		<p role="status" class="font-bold text-slate-500">ไม่มีข้อมูลผลงานเทียบเป้าหมาย</p>

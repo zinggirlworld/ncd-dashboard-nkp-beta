@@ -9,7 +9,7 @@ Dashboard ติดตามตัวชี้วัด NCD การคัด�
 - ปีงบประมาณ
 - ไตรมาส 1–4
 
-ไม่มี UI, data filter, chart หรือ CSV contract ระดับเดือน
+ไม่มี UI, data filter, chart, CSV contract หรือ SQL export ระดับเดือน
 
 ## เริ่มต้นใช้งาน
 
@@ -47,3 +47,16 @@ sql/foot_risk_summary_export_no_bom.sql
 ## GitHub Pages
 
 Workflow จะกำหนด base path จากชื่อ repository อัตโนมัติผ่าน `BASE_PATH` จึงไม่ต้องแก้ชื่อ repository ใน source code ทุกครั้ง
+
+## Quality gate ก่อน deploy
+
+รันบนเครื่องพัฒนา/CI ก่อน push ทุกครั้ง:
+
+```bash
+npm ci
+npm run lint
+npm run check
+npm run build
+```
+
+ไฟล์ส่งมอบแบบ ZIP ควรไม่รวม `.git/`, `.freebuff/`, `node_modules/`, `.svelte-kit/`, `build/` และ `docs/` legacy duplicate.
