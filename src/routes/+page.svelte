@@ -6,7 +6,6 @@
 	import {
 		AlertTriangle,
 		CalendarRange,
-		CheckCircle2,
 		CircleGauge,
 		Footprints,
 		ShieldAlert,
@@ -456,28 +455,6 @@
 							{/each}
 						</tbody>
 					</table>
-				</div>
-			</section>
-
-			<section class="rounded-[1.75rem] border border-emerald-100 bg-white p-5 shadow-sm">
-				<div class="flex items-start gap-3">
-					<div
-						class="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-emerald-700"
-					>
-						<CheckCircle2 aria-hidden="true" size={21} strokeWidth={2.5} />
-					</div>
-					<div>
-						<h2 class="text-lg font-black text-[#063F33]">กติกาการนับที่ใช้ใน Query ฉบับใหม่</h2>
-						<p class="mt-2 text-sm leading-6 font-semibold text-slate-600">
-							นับ HN ไม่ซ้ำภายในแต่ละงวด, จำกัดเฉพาะผู้ป่วยที่อยู่ใน cohort DM ของคลินิก 0105
-							ในงวดเดียวกัน, และเมื่อ HN เดียวมีหลายรหัส Z0280–Z0283 ในงวดเดียวกัน
-							จะเลือกความเสี่ยงสูงสุดเพียงระดับเดียว เพื่อลดการนับซ้ำ
-						</p>
-						<p class="mt-2 text-xs leading-5 font-semibold text-slate-400">
-							จำนวนระดับปีงบประมาณและรายไตรมาสคำนวณด้วย population fence ของงวดนั้นโดยอิสระ
-							จึงไม่ควรนำผลรวม 4 ไตรมาสมาใช้แทนจำนวน HN ของทั้งปีงบประมาณ
-						</p>
-					</div>
 				</div>
 			</section>
 		{/if}
