@@ -1,1 +1,2 @@
-// place files you want to import through the `$lib` alias in this folder.
+export { loadFootRiskSummary } from './footRiskData';
+export type { FootRiskRow, PeriodType } from './footRiskData';

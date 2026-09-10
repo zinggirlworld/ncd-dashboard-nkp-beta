@@ -1,62 +1,62 @@
-# NCD Dashboard NKP
+# Diabetic Foot Risk Dashboard — โรงพยาบาลนครพิงค์
 
-Dashboard ติดตามตัวชี้วัด NCD การคัดกรองภาวะแทรกซ้อนจากโรคเบาหวาน และความเสี่ยงเท้า สำหรับคลินิกเบาหวาน โรงพยาบาลนครพิงค์
+Dashboard สรุปผลการประเมินความเสี่ยงเท้าในผู้ป่วยเบาหวาน โดยแสดงจำนวน HN ไม่ซ้ำตามระดับความเสี่ยง `Z0280-Z0283` ในมุมมองปีงบประมาณและไตรมาส
 
-## ขอบเขตข้อมูล
+## Data source และ Query contract
 
-ระบบรองรับเฉพาะ 2 ระดับเวลา:
-
-- ปีงบประมาณ
-- ไตรมาส 1–4
-
-ไม่มี UI, data filter, chart, CSV contract หรือ SQL export ระดับเดือน
-
-## เริ่มต้นใช้งาน
-
-```bash
-npm ci
-npm run check
-npm run build
-npm run dev
-```
-
-> หลีกเลี่ยง `npm audit fix --force` เพราะอาจ downgrade SvelteKit แบบ breaking change
-
-## ไฟล์ข้อมูล
-
-วางไฟล์ไว้ใน `static/`:
+ข้อมูลสำหรับหน้า WebApp มาจาก `static/foot_risk_summary.csv` ซึ่ง export จาก:
 
 ```text
-static/ncd_indicator_summary.csv
-static/foot_risk_summary.csv
-```
-
-จำนวนข้อมูลที่คาดหวัง:
-
-- `ncd_indicator_summary.csv` 360 แถว: ปีงบประมาณ 72 + ไตรมาส 288
-- `foot_risk_summary.csv` 76 แถว: ปีงบประมาณ 16 + ไตรมาส 60
-
-## SQL สำหรับ Navicat
-
-```text
-sql/ncd_indicator_export_year_only_2566_2569_no_bom.sql
-sql/ncd_indicator_export_quarter_only_2566_2569_no_bom.sql
 sql/foot_risk_summary_export_no_bom.sql
 ```
 
-## GitHub Pages
+กติกาปัจจุบัน:
 
-Workflow จะกำหนด base path จากชื่อ repository อัตโนมัติผ่าน `BASE_PATH` จึงไม่ต้องแก้ชื่อ repository ใน source code ทุกครั้ง
+- DM cohort: clinic `0105`
+- ตัด visit ที่ `CLOSEVISITTYPE = '999'`
+- ต้องมี diagnosis `E10-E14` ใน visit เดียวกัน
+- Foot-risk event: clinic `1201` + `Z0280-Z0283`
+- ผู้ถูกนับต้องอยู่ใน DM cohort ของงวดเดียวกัน
+- HN เดียวมีหลาย risk code ในงวดเดียวกัน: เลือกระดับความเสี่ยงสูงสุด
+- ใช้ `READ COMMITTED`
+- ไม่ใช้ `SELECT *`, `NOLOCK` หรือ `READ UNCOMMITTED`
 
-## Quality gate ก่อน deploy
+> Mapping `clinic 1201 + Z0280-Z0283` เป็น business rule ที่สืบทอดจากระบบเดิม และยังควรให้เจ้าของ requirement ยืนยันเป็นนิยามทางการขององค์กร
 
-รันบนเครื่องพัฒนา/CI ก่อน push ทุกครั้ง:
+## Reconciliation ที่ยืนยันจาก SSBDATABASE วันที่ 2026-09-10
+
+สำหรับชุดตรวจ FY2569:
+
+```text
+Foot risk clinic 1201 ทั้งหมด              1,178 HN
+Foot risk ที่อยู่ใน verified DM cohort        652 HN
+Foot risk ที่ไม่อยู่ใน verified DM cohort      526 HN
+```
+
+ผล export ปีงบประมาณ 2569 ที่นำมาแสดงใน WebApp:
+
+```text
+Z0280 เสี่ยงต่ำ          549 HN
+Z0281 เสี่ยงปานกลาง      89 HN
+Z0282 เสี่ยงสูง           11 HN
+Z0283 เสี่ยงสูงมาก         3 HN
+รวม                      652 HN
+```
+
+ไฟล์ CSV active ผ่านการตรวจโครงสร้างว่าไม่มี duplicate key ระดับ `period + risk_code`, ไม่มีจำนวนติดลบ และทุกงวดมีครบ 4 ระดับความเสี่ยง
+
+## หมายเหตุเรื่องปีงบประมาณและไตรมาส
+
+Population fence ถูกคำนวณแยกตามงวด ดังนั้นจำนวน HN ของปีงบประมาณและผลรวมของ 4 ไตรมาสไม่จำเป็นต้องเท่ากัน และไม่ควรนำผลรวมรายไตรมาสมาแทนจำนวน HN ของทั้งปีงบประมาณ
+
+## เริ่มต้นใช้งาน
 
 ```bash
 npm ci
 npm run lint
 npm run check
 npm run build
+npm run dev
 ```
 
-ไฟล์ส่งมอบแบบ ZIP ควรไม่รวม `.git/`, `.freebuff/`, `node_modules/`, `.svelte-kit/`, `build/` และ `docs/` legacy duplicate.
+ก่อน deploy production ต้องรัน `lint`, `check`, `build` บน environment ที่ติดตั้ง dependencies ตรงกับ platform จริง และทำ sample-HN tracing ตาม business requirement ที่เจ้าของงานยืนยัน
