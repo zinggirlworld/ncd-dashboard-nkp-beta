@@ -8,7 +8,7 @@
 	import ScreeningTrendChart from '$lib/components/ScreeningTrendChart.svelte';
 	import FootRiskChart from '$lib/components/FootRiskChart.svelte';
 
-	import { CalendarRange, Eye, Footprints, Smile, TrendingUp } from 'lucide-svelte';
+	import { Eye, Footprints, Smile, TrendingUp } from 'lucide-svelte';
 
 	const SCREENING_NOS = [13, 14, 15] as const;
 
@@ -310,18 +310,6 @@
 							{currentPeriodLabel} | ปีงบประมาณ {selectedYear}
 						</p>
 					</div>
-
-					<div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
-						<div class="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700">
-							ตา {formatPercent(eyePercent)}
-						</div>
-						<div class="rounded-2xl bg-amber-50 px-4 py-3 text-sm font-black text-amber-700">
-							ช่องปากและฟัน {formatPercent(oralPercent)}
-						</div>
-						<div class="rounded-2xl bg-violet-50 px-4 py-3 text-sm font-black text-violet-700">
-							เท้า {formatPercent(footPercent)}
-						</div>
-					</div>
 				</div>
 			</section>
 
@@ -480,98 +468,31 @@
 				</div>
 			</section>
 
-			<section class="grid w-full grid-cols-1 items-stretch gap-5 lg:grid-cols-12">
-				<div
-					class="min-w-0 rounded-[1.75rem] border border-emerald-100 bg-white p-5 shadow-sm lg:col-span-7"
-				>
-					<div class="mb-5 flex flex-col gap-3">
-						<div class="flex items-center gap-3">
-							<div
-								class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-emerald-700"
-							>
-								<TrendingUp aria-hidden="true" size={23} strokeWidth={2.5} />
-							</div>
-							<div>
-								<h2 class="text-2xl font-black text-[#063F33]">ความครอบคลุมการคัดกรอง</h2>
-								<p class="mt-1 text-sm font-medium text-slate-500">
-									เปรียบเทียบสัดส่วนผู้ป่วยที่ได้รับการตรวจทั้ง 3 ด้าน
-								</p>
-							</div>
-						</div>
-						<div class="rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
-							{currentPeriodLabel}
-						</div>
-					</div>
-					<ScreeningCoverageChart rows={screeningRows} />
-				</div>
-
-				<div
-					class="min-w-0 rounded-[1.75rem] border border-slate-100 bg-white p-5 shadow-sm lg:col-span-5"
-				>
+			<section
+				aria-labelledby="coverage-title"
+				class="w-full min-w-0 rounded-[1.75rem] border border-emerald-100 bg-white p-5 shadow-sm"
+			>
+				<div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 					<div class="flex items-center gap-3">
 						<div
-							class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-50 text-slate-600"
+							class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-emerald-700"
 						>
-							<CalendarRange aria-hidden="true" size={22} strokeWidth={2.5} />
+							<TrendingUp aria-hidden="true" size={23} strokeWidth={2.5} />
 						</div>
 						<div>
-							<h2 class="text-xl font-black text-[#063F33]">สรุปการเข้าถึงบริการ 3 ด้าน</h2>
+							<h2 id="coverage-title" class="text-2xl font-black text-[#063F33]">
+								ความครอบคลุมการคัดกรอง
+							</h2>
 							<p class="mt-1 text-sm font-medium text-slate-500">
-								มองพร้อมกันทั้งจำนวนที่ตรวจแล้วและจำนวนที่ยังไม่ได้รับการตรวจ
+								เปรียบเทียบสัดส่วนผู้ป่วยที่ได้รับการตรวจทั้ง 3 ด้าน
 							</p>
 						</div>
 					</div>
-
-					<div class="mt-5 grid grid-cols-1 gap-3">
-						<div class="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4">
-							<div class="flex items-center justify-between gap-3">
-								<div class="flex items-center gap-3">
-									<Eye aria-hidden="true" size={21} class="text-emerald-700" />
-									<span class="font-black text-slate-700">ตา</span>
-								</div>
-								<span class="text-sm font-black text-emerald-700">{formatPercent(eyePercent)}</span>
-							</div>
-							<div
-								class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-slate-500"
-							>
-								<span>ตรวจแล้ว {formatNumber(eyeCount)}</span>
-								<span>ยังไม่ได้ตรวจ {formatNumber(eyePending)}</span>
-							</div>
-						</div>
-
-						<div class="rounded-2xl border border-amber-100 bg-amber-50/60 p-4">
-							<div class="flex items-center justify-between gap-3">
-								<div class="flex items-center gap-3">
-									<Smile aria-hidden="true" size={21} class="text-amber-700" />
-									<span class="font-black text-slate-700">ช่องปากและฟัน</span>
-								</div>
-								<span class="text-sm font-black text-amber-700">{formatPercent(oralPercent)}</span>
-							</div>
-							<div
-								class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-slate-500"
-							>
-								<span>ตรวจแล้ว {formatNumber(oralCount)}</span>
-								<span>ยังไม่ได้ตรวจ {formatNumber(oralPending)}</span>
-							</div>
-						</div>
-
-						<div class="rounded-2xl border border-violet-100 bg-violet-50/60 p-4">
-							<div class="flex items-center justify-between gap-3">
-								<div class="flex items-center gap-3">
-									<Footprints aria-hidden="true" size={21} class="text-violet-700" />
-									<span class="font-black text-slate-700">เท้า</span>
-								</div>
-								<span class="text-sm font-black text-violet-700">{formatPercent(footPercent)}</span>
-							</div>
-							<div
-								class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-slate-500"
-							>
-								<span>ตรวจแล้ว {formatNumber(footCount)}</span>
-								<span>ยังไม่ได้ตรวจ {formatNumber(footPending)}</span>
-							</div>
-						</div>
+					<div class="rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
+						{currentPeriodLabel}
 					</div>
 				</div>
+				<ScreeningCoverageChart rows={screeningRows} />
 			</section>
 
 			<section class="rounded-[1.75rem] border border-sky-100 bg-white p-5 shadow-sm">
