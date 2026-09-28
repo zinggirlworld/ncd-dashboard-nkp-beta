@@ -64,14 +64,14 @@ function assertRequiredColumns(fields: string[] | undefined): void {
 	const availableFields = new Set(fields ?? []);
 	const missingFields = REQUIRED_COLUMNS.filter((field) => !availableFields.has(field));
 	if (missingFields.length > 0) {
-		throw new Error(`โครงสร้างไฟล์ตัวชี้วัดไม่ครบ: ${missingFields.join(', ')}`);
+		throw new Error(`โครงสร้างไฟล์ข้อมูลการคัดกรองไม่ครบ: ${missingFields.join(', ')}`);
 	}
 }
 
 export async function loadNcdIndicators(): Promise<NcdIndicator[]> {
 	const response = await fetch(`${NCD_CSV_URL}?v=${Date.now()}`, { cache: 'no-store' });
 	if (!response.ok) {
-		throw new Error(`โหลดข้อมูลตัวชี้วัดไม่สำเร็จ (HTTP ${response.status})`);
+		throw new Error(`โหลดข้อมูลการคัดกรองไม่สำเร็จ (HTTP ${response.status})`);
 	}
 
 	const csvText = await response.text();

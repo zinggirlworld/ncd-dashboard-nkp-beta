@@ -8,9 +8,12 @@
 	import ScreeningTrendChart from '$lib/components/ScreeningTrendChart.svelte';
 	import FootRiskChart from '$lib/components/FootRiskChart.svelte';
 
-	import { Eye, Footprints, Smile, TrendingUp } from 'lucide-svelte';
+	import { CalendarDays, Database, Eye, Footprints, Info, ListChecks, Smile, TrendingUp } from 'lucide-svelte';
 
 	const SCREENING_NOS = [13, 14, 15] as const;
+	const DATA_SOURCE = 'SSBDATABASE โรงพยาบาลนครพิงค์';
+	const DATA_LAST_UPDATED = '28 ก.ย. 2569';
+	const COUNTING_RULE = 'DISTINCT HN';
 
 	let rows = $state<NcdIndicator[]>([]);
 	let footRiskRows = $state<FootRiskRow[]>([]);
@@ -165,10 +168,10 @@
 </script>
 
 <svelte:head>
-	<title>Dashboard การคัดกรองภาวะแทรกซ้อนในผู้ป่วยเบาหวาน</title>
+	<title>NCD Screening Research Evidence Dashboard | โรงพยาบาลนครพิงค์</title>
 	<meta
 		name="description"
-		content="Dashboard สรุปข้อมูลการตรวจตา ตรวจสุขภาพช่องปาก และตรวจเท้าในผู้ป่วยเบาหวาน โรงพยาบาลนครพิงค์"
+		content="Dashboard แสดงจำนวน HN ไม่ซ้ำของบริการตรวจจอประสาทตา ตรวจสุขภาพช่องปากและฟัน และตรวจเท้าในผู้ป่วยเบาหวาน โรงพยาบาลนครพิงค์"
 	/>
 </svelte:head>
 
@@ -196,10 +199,10 @@
 					</div>
 
 					<h1 class="mt-4 text-2xl leading-tight font-black text-[#063F33] md:text-3xl">
-						ภาพรวมการคัดกรองภาวะแทรกซ้อนในผู้ป่วยเบาหวาน
+						ภาพรวมจำนวน HN ที่ได้รับบริการคัดกรองภาวะแทรกซ้อนในผู้ป่วยเบาหวาน
 					</h1>
 					<p class="mt-2 text-sm font-semibold text-emerald-800 md:text-base">
-						ตรวจจอประสาทตา · ตรวจสุขภาพช่องปากและฟัน · ตรวจเท้า
+						จำนวน HN ไม่ซ้ำ (Distinct HN) · ตรวจจอประสาทตา · ช่องปากและฟัน · เท้า
 					</p>
 				</div>
 
@@ -253,6 +256,50 @@
 			</div>
 		</header>
 
+		<section
+			aria-label="ที่มาและนิยามข้อมูล"
+			class="grid grid-cols-1 gap-3 sm:grid-cols-3"
+		>
+			<article class="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm">
+				<div class="flex items-start gap-3">
+					<div class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-700">
+						<Database aria-hidden="true" size={20} strokeWidth={2.5} />
+					</div>
+					<div class="min-w-0">
+						<p class="text-xs font-black tracking-wide text-slate-400 uppercase">Data source</p>
+						<p class="mt-1 text-sm font-black text-[#063F33]">{DATA_SOURCE}</p>
+						<p class="mt-1 text-xs font-medium text-slate-500">แสดงผลจากไฟล์สรุป CSV ที่ผ่านการตรวจสอบ</p>
+					</div>
+				</div>
+			</article>
+
+			<article class="rounded-2xl border border-sky-100 bg-white p-4 shadow-sm">
+				<div class="flex items-start gap-3">
+					<div class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sky-50 text-sky-700">
+						<ListChecks aria-hidden="true" size={20} strokeWidth={2.5} />
+					</div>
+					<div class="min-w-0">
+						<p class="text-xs font-black tracking-wide text-slate-400 uppercase">Counting rule</p>
+						<p class="mt-1 text-sm font-black text-[#063F33]">{COUNTING_RULE}</p>
+						<p class="mt-1 text-xs font-medium text-slate-500">นับ HN ไม่ซ้ำภายในช่วงเวลาที่เลือก</p>
+					</div>
+				</div>
+			</article>
+
+			<article class="rounded-2xl border border-violet-100 bg-white p-4 shadow-sm">
+				<div class="flex items-start gap-3">
+					<div class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-violet-50 text-violet-700">
+						<CalendarDays aria-hidden="true" size={20} strokeWidth={2.5} />
+					</div>
+					<div class="min-w-0">
+						<p class="text-xs font-black tracking-wide text-slate-400 uppercase">Data refreshed</p>
+						<p class="mt-1 text-sm font-black text-[#063F33]">{DATA_LAST_UPDATED}</p>
+						<p class="mt-1 text-xs font-medium text-slate-500">ชุดข้อมูลล่าสุดที่ใช้ใน Dashboard</p>
+					</div>
+				</div>
+			</article>
+		</section>
+
 		{#if loading}
 			<section
 				aria-live="polite"
@@ -276,7 +323,7 @@
 				<div class="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
 					<div>
 						<h2 id="screening-three-domains" class="text-2xl font-black text-[#063F33]">
-							3 ด้านการคัดกรองหลัก
+							จำนวนผู้ป่วยที่ได้รับบริการคัดกรอง 3 ด้าน
 						</h2>
 						<p class="mt-1 text-sm font-medium text-slate-500">
 							แสดงจำนวน HN ไม่ซ้ำที่ได้รับบริการในช่วงเวลาที่เลือก
@@ -300,7 +347,7 @@
 								</p>
 								<h3 class="mt-1 text-xl font-black text-[#063F33]">ตรวจจอประสาทตา</h3>
 								<p class="mt-1 text-sm font-semibold text-slate-500">
-									ผู้ป่วยที่ได้รับการตรวจในงวดนี้
+									จำนวน HN ไม่ซ้ำที่ได้รับบริการในงวดนี้
 								</p>
 							</div>
 							<div
@@ -338,7 +385,7 @@
 								</p>
 								<h3 class="mt-1 text-xl font-black text-[#063F33]">ตรวจสุขภาพช่องปากและฟัน</h3>
 								<p class="mt-1 text-sm font-semibold text-slate-500">
-									ผู้ป่วยที่ได้รับการตรวจในงวดนี้
+									จำนวน HN ไม่ซ้ำที่ได้รับบริการในงวดนี้
 								</p>
 							</div>
 							<div
@@ -376,7 +423,7 @@
 								</p>
 								<h3 class="mt-1 text-xl font-black text-[#063F33]">ตรวจเท้า</h3>
 								<p class="mt-1 text-sm font-semibold text-slate-500">
-									ผู้ป่วยที่ได้รับการตรวจในงวดนี้
+									จำนวน HN ไม่ซ้ำที่ได้รับบริการในงวดนี้
 								</p>
 							</div>
 							<div
@@ -528,6 +575,57 @@
 					</div>
 				{/if}
 			</details>
+
+			<section
+				aria-labelledby="data-definition-title"
+				class="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm md:p-6"
+			>
+				<div class="flex items-start gap-4">
+					<div class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-100 text-slate-700">
+						<Info aria-hidden="true" size={23} strokeWidth={2.5} />
+					</div>
+					<div class="min-w-0">
+						<h2 id="data-definition-title" class="text-xl font-black text-[#063F33]">
+							นิยามข้อมูลและข้อควรตีความ
+						</h2>
+						<p class="mt-1 text-sm font-medium text-slate-500">
+							ใช้ประกอบการอธิบายที่มาของตัวเลขและลดความคลาดเคลื่อนในการตีความ
+						</p>
+					</div>
+				</div>
+
+				<div class="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-3">
+					<div class="rounded-2xl bg-emerald-50/70 p-4 ring-1 ring-emerald-100">
+						<p class="text-sm font-black text-emerald-800">1. นับแบบ DISTINCT HN</p>
+						<p class="mt-2 text-sm leading-6 font-medium text-slate-600">
+							แต่ละด้านนับ HN ไม่ซ้ำแยกจากกัน ผู้ป่วยคนเดียวอาจอยู่ได้มากกว่า 1 ด้าน
+							จึงห้ามนำจำนวนจากทั้ง 3 การ์ดมาบวกเป็นจำนวนผู้ป่วยไม่ซ้ำทั้งหมด
+						</p>
+					</div>
+
+					<div class="rounded-2xl bg-sky-50/70 p-4 ring-1 ring-sky-100">
+						<p class="text-sm font-black text-sky-800">2. รายปีนับทั้งปีงบประมาณ</p>
+						<p class="mt-2 text-sm leading-6 font-medium text-slate-600">
+							ค่ารายปีคือ DISTINCT HN ตลอดทั้งปีงบประมาณ ไม่ได้เกิดจากการนำ Q1 + Q2 + Q3 + Q4
+							มาบวกกัน
+						</p>
+					</div>
+
+					<div class="rounded-2xl bg-violet-50/70 p-4 ring-1 ring-violet-100">
+						<p class="text-sm font-black text-violet-800">3. รายไตรมาสนับแยกแต่ละไตรมาส</p>
+						<p class="mt-2 text-sm leading-6 font-medium text-slate-600">
+							แต่ละไตรมาสเป็น DISTINCT HN ภายในไตรมาสนั้น HN เดิมอาจปรากฏซ้ำในคนละไตรมาสได้
+							เมื่อดูแนวโน้มตลอดปี
+						</p>
+					</div>
+				</div>
+
+				<div class="mt-4 flex flex-wrap gap-2 text-xs font-bold text-slate-500">
+					<span class="rounded-full bg-slate-100 px-3 py-2">Source: {DATA_SOURCE}</span>
+					<span class="rounded-full bg-slate-100 px-3 py-2">Rule: {COUNTING_RULE}</span>
+					<span class="rounded-full bg-slate-100 px-3 py-2">Updated: {DATA_LAST_UPDATED}</span>
+				</div>
+			</section>
 		{/if}
 	</div>
 </main>
