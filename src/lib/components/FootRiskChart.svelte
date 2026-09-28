@@ -26,7 +26,6 @@
 			.reduce((sum, row) => sum + row.total_hn, 0)
 	);
 
-	let highRiskPercent = $derived(totalHn > 0 ? (highRiskHn * 100) / totalHn : 0);
 
 	function riskColor(code: string): string {
 		if (code === 'Z0280') return '#10B981';
@@ -41,12 +40,6 @@
 		return value.toLocaleString('th-TH');
 	}
 
-	function formatPercent(value: number): string {
-		return `${value.toLocaleString('th-TH', {
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2
-		})}%`;
-	}
 
 	function buildOptions(): EChartsOption {
 		const data = chartRows.map((row) => ({
@@ -74,7 +67,6 @@
 					const item = params as {
 						name: string;
 						value: number;
-						percent: number;
 						color: string;
 					};
 
@@ -96,11 +88,6 @@
 							<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
 								<span>จำนวน</span>
 								<strong>${formatNumber(Number(item.value))} HN</strong>
-							</div>
-
-							<div style="display: flex; justify-content: space-between;">
-								<span>สัดส่วน</span>
-								<strong>${formatPercent(Number(item.percent))}</strong>
 							</div>
 						</div>
 					`;
@@ -138,8 +125,8 @@
 					left: 'center',
 					top: '46%',
 					style: {
-						text: formatPercent(highRiskPercent),
-						fill: highRiskPercent >= 10 ? '#E11D48' : '#059669',
+						text: `${formatNumber(highRiskHn)} HN`,
+						fill: '#E11D48',
 						fontFamily: 'Tahoma',
 						fontWeight: 900,
 						fontSize: 26,
@@ -151,7 +138,7 @@
 					left: 'center',
 					top: '58%',
 					style: {
-						text: `${formatNumber(highRiskHn)} / ${formatNumber(totalHn)} HN`,
+						text: `รวม ${formatNumber(totalHn)} HN`,
 						fill: '#64748B',
 						fontFamily: 'Tahoma',
 						fontWeight: 700,
@@ -220,7 +207,7 @@
 	<div class="grid grid-cols-1 gap-5 xl:grid-cols-[0.9fr_1.1fr]">
 		<div
 			role="img"
-			aria-label="กราฟสัดส่วนผู้ป่วยตามระดับความเสี่ยงเท้า"
+			aria-label="กราฟจำนวน HN ตามระดับความเสี่ยงเท้า"
 			class="h-[300px] w-full sm:h-[320px]"
 			bind:this={chartEl}
 		></div>
@@ -253,7 +240,7 @@
 					{formatNumber(highRiskHn)} HN
 				</p>
 				<p class="mt-1 text-sm font-semibold text-rose-600">
-					เสี่ยงสูง + เสี่ยงสูงมาก คิดเป็น {formatPercent(highRiskPercent)}
+					เสี่ยงสูง + เสี่ยงสูงมาก
 				</p>
 			</div>
 		</div>

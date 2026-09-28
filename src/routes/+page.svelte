@@ -95,23 +95,11 @@
 	let oralRow = $derived(screeningRows.find((row) => row.indicator_no === 14));
 	let footRow = $derived(screeningRows.find((row) => row.indicator_no === 15));
 
-	let clinicPatientTotal = $derived(
-		Math.max(...screeningRows.map((row) => row.denominator ?? 0), 0)
-	);
-
 	let eyeCount = $derived(eyeRow?.numerator ?? 0);
 	let oralCount = $derived(oralRow?.numerator ?? 0);
 	let footCount = $derived(footRow?.numerator ?? 0);
 
-	let eyePercent = $derived(eyeRow?.actual_percent ?? 0);
-	let oralPercent = $derived(oralRow?.actual_percent ?? 0);
-	let footPercent = $derived(footRow?.actual_percent ?? 0);
-
-	let eyePending = $derived(Math.max((eyeRow?.denominator ?? 0) - eyeCount, 0));
-	let oralPending = $derived(Math.max((oralRow?.denominator ?? 0) - oralCount, 0));
-	let footPending = $derived(Math.max((footRow?.denominator ?? 0) - footCount, 0));
-
-	let hasScreeningData = $derived(screeningRows.some((row) => (row.denominator ?? 0) > 0));
+	let hasScreeningData = $derived(screeningRows.length > 0);
 
 	let currentPeriodLabel = $derived(
 		screeningRows[0]?.period_label ??
@@ -140,22 +128,12 @@
 			.reduce((sum, row) => sum + (row.total_hn ?? 0), 0)
 	);
 
-	let footHighRiskPercent = $derived(
-		footRiskTotal > 0 ? (footHighRiskTotal * 100) / footRiskTotal : 0
-	);
 
 	function formatNumber(value: number | null | undefined): string {
 		if (value === null || value === undefined) return '-';
 		return value.toLocaleString('th-TH', { maximumFractionDigits: 2 });
 	}
 
-	function formatPercent(value: number | null | undefined): string {
-		if (value === null || value === undefined) return '-';
-		return `${value.toLocaleString('th-TH', {
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2
-		})}%`;
-	}
 
 	function handlePeriodOrderChange(event: Event) {
 		selectedPeriodOrder = Number((event.currentTarget as HTMLSelectElement).value);
@@ -294,25 +272,6 @@
 				</p>
 			</section>
 		{:else}
-			<section class="rounded-[1.75rem] border border-sky-100 bg-white p-5 shadow-sm">
-				<div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-					<div>
-						<p class="text-sm font-black text-sky-700">ภาพรวมผู้ป่วยในฐานการคัดกรอง</p>
-						<div class="mt-2 flex flex-wrap items-end gap-3">
-							<p
-								class="text-5xl leading-none font-black tracking-tight text-sky-700 [font-variant-numeric:tabular-nums]"
-							>
-								{formatNumber(clinicPatientTotal)}
-							</p>
-							<p class="pb-1 text-base font-black text-slate-500">คน</p>
-						</div>
-						<p class="mt-2 text-sm font-semibold text-slate-500">
-							{currentPeriodLabel} | ปีงบประมาณ {selectedYear}
-						</p>
-					</div>
-				</div>
-			</section>
-
 			<section aria-labelledby="screening-three-domains" class="space-y-4">
 				<div class="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
 					<div>
@@ -320,7 +279,7 @@
 							3 ด้านการคัดกรองหลัก
 						</h2>
 						<p class="mt-1 text-sm font-medium text-slate-500">
-							แสดงข้อมูลการตรวจตา ช่องปากและฟัน และเท้าอย่างสมดุลในระดับเดียวกัน
+							แสดงจำนวน HN ไม่ซ้ำที่ได้รับบริการในช่วงเวลาที่เลือก
 						</p>
 					</div>
 					<div
@@ -351,28 +310,21 @@
 							</div>
 						</div>
 
-						<div class="mt-6 flex flex-wrap items-end gap-2">
+						<div class="mt-8 flex items-end gap-3">
 							<p
 								class="text-5xl leading-none font-black tracking-tight text-emerald-700 [font-variant-numeric:tabular-nums]"
 							>
 								{formatNumber(eyeCount)}
 							</p>
-							<p class="pb-1 text-sm font-black text-slate-500">
-								/ {formatNumber(eyeRow?.denominator ?? 0)} คน
+							<p class="pb-1 text-base font-black text-slate-500">HN</p>
+						</div>
+
+						<div class="mt-auto pt-6">
+							<p
+								class="inline-flex rounded-full bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700"
+							>
+								จำนวน HN ไม่ซ้ำในช่วงเวลาที่เลือก
 							</p>
-						</div>
-						<p class="mt-2 text-2xl font-black text-emerald-700">{formatPercent(eyePercent)}</p>
-
-						<div aria-hidden="true" class="mt-5 h-3 overflow-hidden rounded-full bg-emerald-50">
-							<div
-								class="h-full rounded-full bg-emerald-500"
-								style={`width: ${Math.min(eyePercent, 100)}%`}
-							></div>
-						</div>
-
-						<div class="mt-auto flex flex-wrap items-center justify-between gap-2 pt-5 text-sm">
-							<span class="font-semibold text-slate-500">ยังไม่ได้รับการตรวจ</span>
-							<span class="font-black text-emerald-700">{formatNumber(eyePending)} คน</span>
 						</div>
 					</article>
 
@@ -396,28 +348,21 @@
 							</div>
 						</div>
 
-						<div class="mt-6 flex flex-wrap items-end gap-2">
+						<div class="mt-8 flex items-end gap-3">
 							<p
 								class="text-5xl leading-none font-black tracking-tight text-amber-700 [font-variant-numeric:tabular-nums]"
 							>
 								{formatNumber(oralCount)}
 							</p>
-							<p class="pb-1 text-sm font-black text-slate-500">
-								/ {formatNumber(oralRow?.denominator ?? 0)} คน
+							<p class="pb-1 text-base font-black text-slate-500">HN</p>
+						</div>
+
+						<div class="mt-auto pt-6">
+							<p
+								class="inline-flex rounded-full bg-amber-50 px-3 py-2 text-xs font-black text-amber-700"
+							>
+								จำนวน HN ไม่ซ้ำในช่วงเวลาที่เลือก
 							</p>
-						</div>
-						<p class="mt-2 text-2xl font-black text-amber-700">{formatPercent(oralPercent)}</p>
-
-						<div aria-hidden="true" class="mt-5 h-3 overflow-hidden rounded-full bg-amber-50">
-							<div
-								class="h-full rounded-full bg-amber-500"
-								style={`width: ${Math.min(oralPercent, 100)}%`}
-							></div>
-						</div>
-
-						<div class="mt-auto flex flex-wrap items-center justify-between gap-2 pt-5 text-sm">
-							<span class="font-semibold text-slate-500">ยังไม่ได้รับการตรวจ</span>
-							<span class="font-black text-amber-700">{formatNumber(oralPending)} คน</span>
 						</div>
 					</article>
 
@@ -441,28 +386,21 @@
 							</div>
 						</div>
 
-						<div class="mt-6 flex flex-wrap items-end gap-2">
+						<div class="mt-8 flex items-end gap-3">
 							<p
 								class="text-5xl leading-none font-black tracking-tight text-violet-700 [font-variant-numeric:tabular-nums]"
 							>
 								{formatNumber(footCount)}
 							</p>
-							<p class="pb-1 text-sm font-black text-slate-500">
-								/ {formatNumber(footRow?.denominator ?? 0)} คน
+							<p class="pb-1 text-base font-black text-slate-500">HN</p>
+						</div>
+
+						<div class="mt-auto pt-6">
+							<p
+								class="inline-flex rounded-full bg-violet-50 px-3 py-2 text-xs font-black text-violet-700"
+							>
+								จำนวน HN ไม่ซ้ำในช่วงเวลาที่เลือก
 							</p>
-						</div>
-						<p class="mt-2 text-2xl font-black text-violet-700">{formatPercent(footPercent)}</p>
-
-						<div aria-hidden="true" class="mt-5 h-3 overflow-hidden rounded-full bg-violet-50">
-							<div
-								class="h-full rounded-full bg-violet-500"
-								style={`width: ${Math.min(footPercent, 100)}%`}
-							></div>
-						</div>
-
-						<div class="mt-auto flex flex-wrap items-center justify-between gap-2 pt-5 text-sm">
-							<span class="font-semibold text-slate-500">ยังไม่ได้รับการตรวจ</span>
-							<span class="font-black text-violet-700">{formatNumber(footPending)} คน</span>
 						</div>
 					</article>
 				</div>
@@ -481,10 +419,10 @@
 						</div>
 						<div>
 							<h2 id="coverage-title" class="text-2xl font-black text-[#063F33]">
-								ความครอบคลุมการคัดกรอง
+								จำนวน HN ที่ได้รับบริการ
 							</h2>
 							<p class="mt-1 text-sm font-medium text-slate-500">
-								เปรียบเทียบสัดส่วนผู้ป่วยที่ได้รับการตรวจทั้ง 3 ด้าน
+								เปรียบเทียบจำนวน HN ไม่ซ้ำของการตรวจทั้ง 3 ด้าน
 							</p>
 						</div>
 					</div>
@@ -504,9 +442,9 @@
 							<TrendingUp aria-hidden="true" size={23} strokeWidth={2.5} />
 						</div>
 						<div>
-							<h2 class="text-2xl font-black text-[#063F33]">แนวโน้มการคัดกรองรายไตรมาส</h2>
+							<h2 class="text-2xl font-black text-[#063F33]">แนวโน้มจำนวน HN รายไตรมาส</h2>
 							<p class="mt-1 text-sm font-medium text-slate-500">
-								ช่วยให้เห็นทิศทางการเข้าถึงบริการตลอดปีงบประมาณ
+								แสดงจำนวน HN ไม่ซ้ำของแต่ละไตรมาสตลอดปีงบประมาณ
 							</p>
 						</div>
 					</div>
@@ -522,7 +460,7 @@
 								{domain.title}
 							</h3>
 							<p class="mt-1 text-xs font-medium text-slate-500">
-								สัดส่วนผู้ป่วยที่ได้รับการตรวจ • ปีงบประมาณ {selectedYear}
+								จำนวน HN ที่ได้รับบริการ • ปีงบประมาณ {selectedYear}
 							</p>
 							<ScreeningTrendChart {rows} year={selectedYear} indicatorNo={domain.no} />
 						</article>
@@ -581,9 +519,7 @@
 											{formatNumber(footRiskTotal)} HN
 										</p>
 										<p class="mt-2 text-sm font-semibold text-slate-500">
-											กลุ่มเสี่ยงสูงและสูงมาก {formatNumber(footHighRiskTotal)} HN ({formatPercent(
-												footHighRiskPercent
-											)})
+											กลุ่มเสี่ยงสูงและสูงมาก {formatNumber(footHighRiskTotal)} HN
 										</p>
 									</div>
 								</div>

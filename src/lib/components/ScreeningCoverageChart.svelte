@@ -18,7 +18,7 @@
 	let chartRows = $derived(
 		rows
 			.filter((row) => [13, 14, 15].includes(row.indicator_no))
-			.filter((row) => row.actual_percent !== null)
+			.filter((row) => row.numerator !== null)
 			.sort((a, b) => a.indicator_no - b.indicator_no)
 	);
 
@@ -43,9 +43,7 @@
 					if (!row) return '';
 					return [
 						`<strong>${labelFor(row.indicator_no)}</strong>`,
-						`ได้รับการตรวจ ${Number(row.numerator ?? 0).toLocaleString('th-TH')} คน`,
-						`จาก ${Number(row.denominator ?? 0).toLocaleString('th-TH')} คน`,
-						`คิดเป็น ${Number(row.actual_percent ?? 0).toFixed(2)}%`
+						`จำนวน ${Number(row.numerator ?? 0).toLocaleString('th-TH')} HN`
 					].join('<br/>');
 				}
 			},
@@ -66,9 +64,8 @@
 			yAxis: {
 				type: 'value',
 				min: 0,
-				max: 100,
 				axisLabel: {
-					formatter: '{value}%',
+					formatter: '{value}',
 					fontFamily: 'Tahoma',
 					fontWeight: 700,
 					color: '#64748B'
@@ -78,7 +75,7 @@
 			series: [
 				{
 					type: 'bar',
-					data: chartRows.map((row) => row.actual_percent ?? 0),
+					data: chartRows.map((row) => row.numerator ?? 0),
 					barMaxWidth: 54,
 					itemStyle: {
 						color: (params) => colors[params.dataIndex] ?? '#0EA5E9',
@@ -87,7 +84,7 @@
 					label: {
 						show: true,
 						position: 'top',
-						formatter: (params) => `${Number(params.value).toFixed(1)}%`,
+						formatter: (params) => `${Number(params.value).toLocaleString('th-TH')} HN`,
 						fontFamily: 'Tahoma',
 						fontWeight: 800,
 						color: '#0F172A'
@@ -122,7 +119,7 @@
 {#if hasData}
 	<div
 		role="img"
-		aria-label="กราฟเปรียบเทียบความครอบคลุมการตรวจตา ตรวจสุขภาพช่องปากและฟัน และตรวจเท้า"
+		aria-label="กราฟเปรียบเทียบจำนวน HN ที่ได้รับบริการตรวจตา ตรวจสุขภาพช่องปากและฟัน และตรวจเท้า"
 		class="h-[320px] w-full sm:h-[350px]"
 		bind:this={chartEl}
 	></div>

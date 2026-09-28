@@ -25,7 +25,7 @@
 					item.period_order === quarter &&
 					item.indicator_no === indicatorNo
 			);
-			return row?.actual_percent ?? null;
+			return row?.numerator ?? null;
 		});
 	}
 
@@ -51,7 +51,7 @@
 				backgroundColor: 'rgba(255,255,255,0.98)',
 				textStyle: { fontFamily: 'Tahoma', color: '#334155', fontWeight: 700 },
 				valueFormatter: (value) =>
-					value === null || value === undefined ? '-' : `${Number(value).toFixed(2)}%`
+					value === null || value === undefined ? '-' : `${Number(value).toLocaleString('th-TH')} HN`
 			},
 			legend: {
 				show: false,
@@ -67,9 +67,8 @@
 			yAxis: {
 				type: 'value',
 				min: 0,
-				max: 100,
 				axisLabel: {
-					formatter: '{value}%',
+					formatter: '{value}',
 					fontFamily: 'Tahoma',
 					fontWeight: 700,
 					color: '#64748B'
@@ -137,7 +136,7 @@
 {#if hasData}
 	<div
 		role="img"
-		aria-label={`กราฟแนวโน้มรายไตรมาสของ${domainLabel} ปีงบประมาณ ${year}`}
+		aria-label={`กราฟแนวโน้มจำนวน HN รายไตรมาสของ${domainLabel} ปีงบประมาณ ${year}`}
 		class="h-[230px] w-full min-w-0"
 		bind:this={chartEl}
 	></div>
@@ -149,7 +148,7 @@
 				<dd class="mt-1 font-bold text-slate-700">
 					{value === null
 						? 'ไม่มีข้อมูล'
-						: value.toLocaleString('th-TH', { maximumFractionDigits: 2 }) + '%'}
+						: value.toLocaleString('th-TH', { maximumFractionDigits: 0 }) + ' HN'}
 				</dd>
 			</div>
 		{/each}
