@@ -15,24 +15,19 @@
 	let chartRows = $derived(
 		rows.filter((row) => row.total_hn > 0).sort((a, b) => a.risk_order - b.risk_order)
 	);
-
 	let hasData = $derived(chartRows.length > 0);
-
 	let totalHn = $derived(chartRows.reduce((sum, row) => sum + row.total_hn, 0));
-
 	let highRiskHn = $derived(
 		chartRows
 			.filter((row) => row.risk_code === 'Z0282' || row.risk_code === 'Z0283')
 			.reduce((sum, row) => sum + row.total_hn, 0)
 	);
 
-
 	function riskColor(code: string): string {
 		if (code === 'Z0280') return '#10B981';
 		if (code === 'Z0281') return '#F59E0B';
 		if (code === 'Z0282') return '#F97316';
 		if (code === 'Z0283') return '#EF4444';
-
 		return '#94A3B8';
 	}
 
@@ -40,141 +35,74 @@
 		return value.toLocaleString('th-TH');
 	}
 
-
 	function buildOptions(): EChartsOption {
-		const data = chartRows.map((row) => ({
-			name: row.risk_name,
-			value: row.total_hn,
-			itemStyle: {
-				color: riskColor(row.risk_code)
-			}
-		}));
-
 		return {
 			backgroundColor: 'transparent',
-
 			tooltip: {
-				trigger: 'item',
-				borderColor: '#FED7AA',
+				trigger: 'axis',
+				axisPointer: { type: 'shadow' },
+				borderColor: '#E2E8F0',
 				borderWidth: 1,
-				backgroundColor: 'rgba(255, 255, 255, 0.96)',
-				textStyle: {
-					fontFamily: 'Tahoma',
-					color: '#334155',
-					fontWeight: 700
-				},
+				backgroundColor: 'rgba(255,255,255,0.98)',
+				textStyle: { fontFamily: 'Tahoma', color: '#334155', fontWeight: 700 },
 				formatter: (params) => {
-					const item = params as {
-						name: string;
-						value: number;
-						color: string;
-					};
-
-					return `
-						<div style="min-width: 180px;">
-							<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-								<span style="
-									display: inline-block;
-									width: 10px;
-									height: 10px;
-									border-radius: 999px;
-									background: ${item.color};
-								"></span>
-								<strong style="font-size: 14px; color: #0F172A;">
-									${item.name}
-								</strong>
-							</div>
-
-							<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-								<span>จำนวน</span>
-								<strong>${formatNumber(Number(item.value))} HN</strong>
-							</div>
-						</div>
-					`;
+					const items = Array.isArray(params) ? params : [params];
+					const item = items[0] as { dataIndex?: number };
+					const row = chartRows[item.dataIndex ?? 0];
+					if (!row) return '';
+					return [
+						`<strong>${row.risk_code} · ${row.risk_name}</strong>`,
+						`จำนวน ${formatNumber(row.total_hn)} HN`
+					].join('<br/>');
 				}
 			},
-
-			legend: {
-				bottom: 0,
-				left: 'center',
-				itemWidth: 12,
-				itemHeight: 10,
-				textStyle: {
+			grid: { left: 150, right: 80, top: 20, bottom: 24, containLabel: false },
+			xAxis: {
+				type: 'value',
+				min: 0,
+				axisLabel: {
 					fontFamily: 'Tahoma',
 					fontWeight: 700,
-					color: '#334155'
-				}
+					color: '#64748B'
+				},
+				splitLine: { lineStyle: { color: '#E2E8F0', type: 'dashed' } }
 			},
-
-			graphic: [
-				{
-					type: 'text',
-					left: 'center',
-					top: '38%',
-					style: {
-						text: 'เสี่ยงสูงขึ้นไป',
-						fill: '#64748B',
-						fontFamily: 'Tahoma',
-						fontWeight: 700,
-						fontSize: 13,
-						align: 'center'
-					}
+			yAxis: {
+				type: 'category',
+				inverse: true,
+				data: chartRows.map((row) => `${row.risk_code}  ${row.risk_name}`),
+				axisLabel: {
+					fontFamily: 'Tahoma',
+					fontWeight: 700,
+					color: '#334155',
+					width: 130,
+					overflow: 'break'
 				},
-				{
-					type: 'text',
-					left: 'center',
-					top: '46%',
-					style: {
-						text: `${formatNumber(highRiskHn)} HN`,
-						fill: '#E11D48',
-						fontFamily: 'Tahoma',
-						fontWeight: 900,
-						fontSize: 26,
-						align: 'center'
-					}
-				},
-				{
-					type: 'text',
-					left: 'center',
-					top: '58%',
-					style: {
-						text: `รวม ${formatNumber(totalHn)} HN`,
-						fill: '#64748B',
-						fontFamily: 'Tahoma',
-						fontWeight: 700,
-						fontSize: 12,
-						align: 'center'
-					}
-				}
-			],
-
+				axisTick: { show: false },
+				axisLine: { show: false }
+			},
 			series: [
 				{
-					name: 'ความเสี่ยงเท้า',
-					type: 'pie',
-					radius: ['58%', '78%'],
-					center: ['50%', '48%'],
-					avoidLabelOverlap: true,
-					itemStyle: {
-						borderRadius: 12,
-						borderColor: '#FFFFFF',
-						borderWidth: 5
+					type: 'bar',
+					data: chartRows.map((row) => ({
+						value: row.total_hn,
+						itemStyle: { color: riskColor(row.risk_code), borderRadius: [0, 10, 10, 0] }
+					})),
+					barWidth: 24,
+					showBackground: true,
+					backgroundStyle: {
+						color: '#F1F5F9',
+						borderRadius: 10
 					},
 					label: {
-						show: false
-					},
-					labelLine: {
-						show: false
-					},
-					emphasis: {
-						scale: true,
-						scaleSize: 6,
-						itemStyle: {
-							shadowBlur: 16,
-							shadowColor: 'rgba(15, 23, 42, 0.12)'
-						}
-					},
-					data
+						show: true,
+						position: 'right',
+						distance: 10,
+						formatter: (params) => `${Number(params.value).toLocaleString('th-TH')} HN`,
+						fontFamily: 'Tahoma',
+						fontWeight: 800,
+						color: '#334155'
+					}
 				}
 			]
 		};
@@ -187,10 +115,11 @@
 		chart = instance;
 
 		const handleResize = () => instance.resize();
-		window.addEventListener('resize', handleResize);
+		const observer = new ResizeObserver(handleResize);
+		observer.observe(chartEl);
 
 		return () => {
-			window.removeEventListener('resize', handleResize);
+			observer.disconnect();
 			instance.dispose();
 			if (chart === instance) chart = null;
 		};
@@ -198,52 +127,32 @@
 
 	$effect(() => {
 		if (!chart || !hasData) return;
-
 		chart.setOption(buildOptions(), true);
 	});
 </script>
 
 {#if hasData}
-	<div class="grid grid-cols-1 gap-5 xl:grid-cols-[0.9fr_1.1fr]">
-		<div
-			role="img"
-			aria-label="กราฟจำนวน HN ตามระดับความเสี่ยงเท้า"
-			class="h-[300px] w-full sm:h-[320px]"
-			bind:this={chartEl}
-		></div>
-
-		<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-			{#each chartRows as row (row.risk_code)}
-				<div class="rounded-3xl border border-slate-100 bg-slate-50 p-4">
-					<div class="flex items-start justify-between gap-3">
-						<div>
-							<p class="text-xs font-black text-slate-400">{row.risk_code}</p>
-							<h3 class="mt-1 text-lg font-black text-slate-800">{row.risk_name}</h3>
-						</div>
-
-						<div
-							class="h-4 w-4 rounded-full"
-							style={`background-color: ${riskColor(row.risk_code)}`}
-						></div>
-					</div>
-
-					<p class="mt-4 text-4xl font-black text-slate-800">
-						{formatNumber(row.total_hn)}
-					</p>
-					<p class="mt-1 text-sm font-semibold text-slate-500">HN</p>
-				</div>
-			{/each}
-
-			<div class="rounded-3xl border border-rose-100 bg-rose-50 p-4 sm:col-span-2">
-				<p class="text-sm font-black text-rose-700">กลุ่มที่ควรติดตามใกล้ชิด</p>
-				<p class="mt-2 text-4xl font-black text-rose-600">
-					{formatNumber(highRiskHn)} HN
-				</p>
-				<p class="mt-1 text-sm font-semibold text-rose-600">
-					เสี่ยงสูง + เสี่ยงสูงมาก
-				</p>
-			</div>
+	<div class="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-stretch">
+		<div class="min-w-0 rounded-3xl border border-slate-100 bg-slate-50/40 p-4">
+			<div
+				role="img"
+				aria-label="กราฟแท่งแนวนอนแสดงจำนวน HN ตามระดับความเสี่ยงเท้า"
+				class="h-[300px] w-full sm:h-[320px]"
+				bind:this={chartEl}
+			></div>
 		</div>
+
+		<aside class="flex flex-col justify-center rounded-3xl border border-rose-100 bg-rose-50 p-5">
+			<p class="text-sm font-black text-rose-700">กลุ่มเสี่ยงสูง + เสี่ยงสูงมาก</p>
+			<p class="mt-3 text-5xl font-black tracking-tight text-rose-600 [font-variant-numeric:tabular-nums]">
+				{formatNumber(highRiskHn)} HN
+			</p>
+			<p class="mt-3 text-sm font-semibold text-slate-600">Z0282 + Z0283</p>
+			<div class="mt-5 border-t border-rose-100 pt-4">
+				<p class="text-xs font-bold text-slate-500">ผู้ป่วยที่มีผลประเมินความเสี่ยงเท้าทั้งหมด</p>
+				<p class="mt-1 text-2xl font-black text-slate-800">{formatNumber(totalHn)} HN</p>
+			</div>
+		</aside>
 	</div>
 {:else}
 	<div

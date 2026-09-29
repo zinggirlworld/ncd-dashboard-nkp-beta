@@ -5,12 +5,10 @@
 
 	let {
 		rows = [],
-		year,
-		indicatorNo
+		year
 	}: {
 		rows?: NcdIndicator[];
 		year: number;
-		indicatorNo: number;
 	} = $props();
 
 	let chartEl = $state<HTMLDivElement | null>(null);
@@ -32,16 +30,39 @@
 	let eyeValues = $derived(valuesFor(13));
 	let oralValues = $derived(valuesFor(14));
 	let footValues = $derived(valuesFor(15));
-
-	let selectedValues = $derived(
-		indicatorNo === 13 ? eyeValues : indicatorNo === 14 ? oralValues : footValues
+	let hasData = $derived(
+		[...eyeValues, ...oralValues, ...footValues].some((value) => value !== null)
 	);
-	let domainLabel = $derived(
-		indicatorNo === 13 ? 'ตรวจตา' : indicatorNo === 14 ? 'ตรวจช่องปากและฟัน' : 'ตรวจเท้า'
-	);
-	let hasData = $derived(selectedValues.some((value) => value !== null));
 
 	function buildOptions(): EChartsOption {
+		const makeSeries = (
+			name: string,
+			data: Array<number | null>,
+			color: string
+		): NonNullable<EChartsOption['series']>[number] => ({
+			name,
+			type: 'line',
+			data,
+			smooth: true,
+			connectNulls: false,
+			symbol: 'circle',
+			symbolSize: 10,
+			lineStyle: { width: 4, color },
+			itemStyle: { color },
+			label: {
+				show: true,
+				position: 'top',
+				distance: 8,
+				formatter: (params) =>
+					params.value === null || params.value === undefined
+						? ''
+						: Number(params.value).toLocaleString('th-TH'),
+				fontFamily: 'Tahoma',
+				fontWeight: 800,
+				color
+			}
+		});
+
 		return {
 			backgroundColor: 'transparent',
 			tooltip: {
@@ -51,24 +72,31 @@
 				backgroundColor: 'rgba(255,255,255,0.98)',
 				textStyle: { fontFamily: 'Tahoma', color: '#334155', fontWeight: 700 },
 				valueFormatter: (value) =>
-					value === null || value === undefined ? '-' : `${Number(value).toLocaleString('th-TH')} HN`
+					value === null || value === undefined
+						? '-'
+						: `${Number(value).toLocaleString('th-TH')} HN`
 			},
 			legend: {
-				show: false,
+				top: 4,
+				left: 'center',
+				itemWidth: 18,
+				itemHeight: 10,
 				textStyle: { fontFamily: 'Tahoma', fontWeight: 700, color: '#475569' }
 			},
-			grid: { left: 44, right: 16, top: 24, bottom: 36 },
+			grid: { left: 58, right: 30, top: 72, bottom: 48, containLabel: true },
 			xAxis: {
 				type: 'category',
-				data: ['1', '2', '3', '4'],
+				boundaryGap: false,
+				data: ['Q1', 'Q2', 'Q3', 'Q4'],
 				axisLabel: { fontFamily: 'Tahoma', fontWeight: 700, color: '#475569' },
 				axisLine: { lineStyle: { color: '#CBD5E1' } }
 			},
 			yAxis: {
 				type: 'value',
 				min: 0,
+				name: 'HN',
+				nameTextStyle: { fontFamily: 'Tahoma', fontWeight: 700, color: '#64748B' },
 				axisLabel: {
-					formatter: '{value}',
 					fontFamily: 'Tahoma',
 					fontWeight: 700,
 					color: '#64748B'
@@ -76,37 +104,10 @@
 				splitLine: { lineStyle: { color: '#E2E8F0', type: 'dashed' } }
 			},
 			series: [
-				{
-					name: 'ตรวจตา',
-					type: 'line',
-					data: eyeValues,
-					smooth: true,
-					connectNulls: false,
-					symbolSize: 9,
-					lineStyle: { width: 4, color: '#10B981' },
-					itemStyle: { color: '#10B981' }
-				},
-				{
-					name: 'ตรวจช่องปากและฟัน',
-					type: 'line',
-					data: oralValues,
-					smooth: true,
-					connectNulls: false,
-					symbolSize: 9,
-					lineStyle: { width: 4, color: '#F59E0B' },
-					itemStyle: { color: '#F59E0B' }
-				},
-				{
-					name: 'ตรวจเท้า',
-					type: 'line',
-					data: footValues,
-					smooth: true,
-					connectNulls: false,
-					symbolSize: 9,
-					lineStyle: { width: 4, color: '#8B5CF6' },
-					itemStyle: { color: '#8B5CF6' }
-				}
-			].filter((_, index) => index === indicatorNo - 13) as EChartsOption['series']
+				makeSeries('ตรวจจอประสาทตา', eyeValues, '#10B981'),
+				makeSeries('ตรวจช่องปากและฟัน', oralValues, '#F59E0B'),
+				makeSeries('ตรวจเท้า', footValues, '#8B5CF6')
+			]
 		};
 	}
 
@@ -136,26 +137,13 @@
 {#if hasData}
 	<div
 		role="img"
-		aria-label={`กราฟแนวโน้มจำนวน HN รายไตรมาสของ${domainLabel} ปีงบประมาณ ${year}`}
-		class="h-[230px] w-full min-w-0"
+		aria-label={`กราฟเปรียบเทียบแนวโน้มจำนวน HN รายไตรมาสของการตรวจจอประสาทตา ตรวจสุขภาพช่องปากและฟัน และตรวจเท้า ปีงบประมาณ ${year}`}
+		class="h-[360px] w-full min-w-0 sm:h-[400px]"
 		bind:this={chartEl}
 	></div>
-	<p class="text-center text-xs font-medium text-slate-500">ไตรมาส</p>
-	<dl class="mt-3 grid grid-cols-4 gap-1 border-t border-slate-100 pt-3 text-center text-xs">
-		{#each selectedValues as value, index (index)}
-			<div>
-				<dt class="text-slate-500">ไตรมาส {index + 1}</dt>
-				<dd class="mt-1 font-bold text-slate-700">
-					{value === null
-						? 'ไม่มีข้อมูล'
-						: value.toLocaleString('th-TH', { maximumFractionDigits: 0 }) + ' HN'}
-				</dd>
-			</div>
-		{/each}
-	</dl>
 {:else}
 	<div
-		class="grid h-[230px] place-items-center rounded-3xl border border-dashed border-slate-200 p-4 text-center"
+		class="grid h-[300px] place-items-center rounded-3xl border border-dashed border-slate-200 p-4 text-center"
 	>
 		<p role="status" class="font-bold text-slate-500">ยังไม่มีข้อมูลรายไตรมาสสำหรับปีงบประมาณนี้</p>
 	</div>

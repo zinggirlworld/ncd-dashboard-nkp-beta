@@ -122,11 +122,6 @@
 		currentFootRiskRows.reduce((sum, row) => sum + (row.total_hn ?? 0), 0)
 	);
 
-	let footHighRiskTotal = $derived(
-		currentFootRiskRows
-			.filter((row) => row.risk_code === 'Z0282' || row.risk_code === 'Z0283')
-			.reduce((sum, row) => sum + (row.total_hn ?? 0), 0)
-	);
 
 
 	function formatNumber(value: number | null | undefined): string {
@@ -292,7 +287,7 @@
 
 				<div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
 					<article
-						class="flex min-h-[260px] min-w-0 flex-col rounded-[1.75rem] border border-emerald-100 bg-white p-5 shadow-sm"
+						class="flex min-h-[220px] min-w-0 flex-col rounded-[1.75rem] border border-emerald-100 bg-white p-5 shadow-sm"
 					>
 						<div class="flex items-start justify-between gap-4">
 							<div>
@@ -301,7 +296,7 @@
 								</p>
 								<h3 class="mt-1 text-xl font-black text-[#063F33]">ตรวจจอประสาทตา</h3>
 								<p class="mt-1 text-sm font-semibold text-slate-500">
-									จำนวน HN ไม่ซ้ำที่ได้รับบริการในงวดนี้
+									จำนวน HN ไม่ซ้ำในช่วงเวลาที่เลือก
 								</p>
 							</div>
 							<div
@@ -320,17 +315,10 @@
 							<p class="pb-1 text-base font-black text-slate-500">HN</p>
 						</div>
 
-						<div class="mt-auto pt-6">
-							<p
-								class="inline-flex rounded-full bg-emerald-50 px-3 py-2 text-xs font-black text-emerald-700"
-							>
-								จำนวน HN ไม่ซ้ำในช่วงเวลาที่เลือก
-							</p>
-						</div>
 					</article>
 
 					<article
-						class="flex min-h-[260px] min-w-0 flex-col rounded-[1.75rem] border border-amber-100 bg-white p-5 shadow-sm"
+						class="flex min-h-[220px] min-w-0 flex-col rounded-[1.75rem] border border-amber-100 bg-white p-5 shadow-sm"
 					>
 						<div class="flex items-start justify-between gap-4">
 							<div>
@@ -339,7 +327,7 @@
 								</p>
 								<h3 class="mt-1 text-xl font-black text-[#063F33]">ตรวจสุขภาพช่องปากและฟัน</h3>
 								<p class="mt-1 text-sm font-semibold text-slate-500">
-									จำนวน HN ไม่ซ้ำที่ได้รับบริการในงวดนี้
+									จำนวน HN ไม่ซ้ำในช่วงเวลาที่เลือก
 								</p>
 							</div>
 							<div
@@ -358,17 +346,10 @@
 							<p class="pb-1 text-base font-black text-slate-500">HN</p>
 						</div>
 
-						<div class="mt-auto pt-6">
-							<p
-								class="inline-flex rounded-full bg-amber-50 px-3 py-2 text-xs font-black text-amber-700"
-							>
-								จำนวน HN ไม่ซ้ำในช่วงเวลาที่เลือก
-							</p>
-						</div>
 					</article>
 
 					<article
-						class="flex min-h-[260px] min-w-0 flex-col rounded-[1.75rem] border border-violet-100 bg-white p-5 shadow-sm"
+						class="flex min-h-[220px] min-w-0 flex-col rounded-[1.75rem] border border-violet-100 bg-white p-5 shadow-sm"
 					>
 						<div class="flex items-start justify-between gap-4">
 							<div>
@@ -377,7 +358,7 @@
 								</p>
 								<h3 class="mt-1 text-xl font-black text-[#063F33]">ตรวจเท้า</h3>
 								<p class="mt-1 text-sm font-semibold text-slate-500">
-									จำนวน HN ไม่ซ้ำที่ได้รับบริการในงวดนี้
+									จำนวน HN ไม่ซ้ำในช่วงเวลาที่เลือก
 								</p>
 							</div>
 							<div
@@ -396,13 +377,6 @@
 							<p class="pb-1 text-base font-black text-slate-500">HN</p>
 						</div>
 
-						<div class="mt-auto pt-6">
-							<p
-								class="inline-flex rounded-full bg-violet-50 px-3 py-2 text-xs font-black text-violet-700"
-							>
-								จำนวน HN ไม่ซ้ำในช่วงเวลาที่เลือก
-							</p>
-						</div>
 					</article>
 				</div>
 			</section>
@@ -453,20 +427,7 @@
 						ปีงบประมาณ {selectedYear}
 					</div>
 				</div>
-				<div class="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-3">
-					{#each [{ no: 13, title: 'ตรวจจอประสาทตา', color: 'text-emerald-700', border: 'border-emerald-100', icon: Eye }, { no: 14, title: 'ตรวจสุขภาพช่องปากและฟัน', color: 'text-amber-700', border: 'border-amber-100', icon: Smile }, { no: 15, title: 'ตรวจเท้า', color: 'text-violet-700', border: 'border-violet-100', icon: Footprints }] as domain (domain.no)}
-						<article class={'min-w-0 rounded-2xl border bg-white p-4 ' + domain.border}>
-							<h3 class={'flex min-h-14 items-center gap-3 text-lg font-black ' + domain.color}>
-								<domain.icon size={24} aria-hidden="true" class="shrink-0" />
-								{domain.title}
-							</h3>
-							<p class="mt-1 text-xs font-medium text-slate-500">
-								จำนวน HN ที่ได้รับบริการ • ปีงบประมาณ {selectedYear}
-							</p>
-							<ScreeningTrendChart {rows} year={selectedYear} indicatorNo={domain.no} />
-						</article>
-					{/each}
-				</div>
+				<ScreeningTrendChart {rows} year={selectedYear} />
 			</section>
 
 			<details bind:open={footRiskOpen} class="rounded-2xl border border-slate-200 bg-white p-5">
@@ -489,42 +450,7 @@
 								<p class="mt-1 text-sm font-semibold text-slate-500">{footRiskError}</p>
 							</div>
 						{:else}
-							<div class="grid w-full grid-cols-1 items-stretch gap-5 lg:grid-cols-12">
-								<div
-									class="min-w-0 rounded-3xl border border-slate-100 bg-slate-50/40 p-4 lg:col-span-7"
-								>
-									<FootRiskChart rows={currentFootRiskRows} />
-								</div>
-
-								<div
-									class="min-w-0 rounded-3xl border border-amber-100 bg-amber-50/50 p-5 lg:col-span-5"
-								>
-									<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-										{#each currentFootRiskRows as row (row.risk_code)}
-											<div class="rounded-2xl bg-white p-4 ring-1 ring-slate-100">
-												<p class="text-xs font-black text-slate-500">{row.risk_code}</p>
-												<p class="mt-1 text-sm font-black text-slate-700">{row.risk_name}</p>
-												<p class="mt-3 text-3xl font-black text-slate-800">
-													{formatNumber(row.total_hn)}
-												</p>
-												<p class="text-xs font-bold text-slate-500">HN</p>
-											</div>
-										{/each}
-									</div>
-
-									<div class="mt-4 rounded-2xl bg-white p-4 ring-1 ring-amber-100">
-										<p class="text-xs font-black text-slate-500">
-											ผู้ป่วยที่มีผลประเมินความเสี่ยงเท้า
-										</p>
-										<p class="mt-1 text-3xl font-black text-amber-700">
-											{formatNumber(footRiskTotal)} HN
-										</p>
-										<p class="mt-2 text-sm font-semibold text-slate-500">
-											กลุ่มเสี่ยงสูงและสูงมาก {formatNumber(footHighRiskTotal)} HN
-										</p>
-									</div>
-								</div>
-							</div>
+							<FootRiskChart rows={currentFootRiskRows} />
 						{/if}
 					</div>
 				{/if}
